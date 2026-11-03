@@ -24,7 +24,7 @@ Ce document explique comment le code de **Carnet de Croix** est organisé, comme
 
 | Élément | Choix |
 |---|---|
-| Langage serveur | Python 3.9+ |
+| Langage serveur | Python 3.11+ |
 | Framework web | Flask (fabrique d'application + blueprints) |
 | Base de données | SQLite (un seul fichier, `carnet.db`), accès direct avec le module `sqlite3` (pas d'ORM) |
 | Templates | Jinja2, pages rendues côté serveur |

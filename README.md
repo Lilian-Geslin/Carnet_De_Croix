@@ -19,7 +19,7 @@ Application web **Flask + SQLite**, interface en français, sans framework JavaS
 
 ## Installation et lancement
 
-Prérequis : **Python 3.9+**.
+Prérequis : **Python 3.11+** (imposé par Pillow 13, épinglé dans requirements.txt).
 
 ```bash
 python -m venv venv
