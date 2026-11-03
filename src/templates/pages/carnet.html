@@ -1,0 +1,292 @@
+{#
+  pages/carnet.html — page « Mon Carnet » : arbre géographique des ascensions réussies (logs).
+  Route : GET /carnet (src/routes/pages.py, fonction carnet(), protégée par @login_required).
+  Hérite de base.html (bloc « content »).
+
+  Variables reçues :
+    - tree (list) : arbre construit par services/carnet.build_carnet_tree. Chaque élément =
+      {pays, departements:[{departement, localisations:[{localisation, sites:[{site, secteurs:[...]}]}]}]}.
+      Un secteur = {sec, total_count, ascensions:[item], sous_secteurs:[{sous_secteur, ascensions:[item]}]}.
+      Un item d'ascension = {asc, longueurs, reps} (voir partials/carnet_card.html).
+      Les niveaux sans aucun log sont déjà retirés côté Python.
+    - grades (list[str]) : cotations ordonnées (GRADE_ORDER), exposées au JS via la constante GRADES.
+    - open_path (dict) : ids du chemin à déplier après un ajout (paramètre ?open_secteur=...), {} sinon.
+    - ressenti_labels (dict) : code de ressenti -> libellé affiché.
+
+  Partials : partials/carnet_card.html (macro render_ascension), modal_repetition.html,
+  modal_log.html, modal_infos.html.
+
+  JS (chargé par base.html) : features/geo-tree.js (dépliage, utilise OPEN_PATH), ascension-modal.js
+  (fenêtre d'ajout/édition), geo-edit.js (renommer/supprimer un niveau), repetition.js, infos-modal.js.
+  CSS : carnet.css, modals-forms.css.
+#}
+{% extends "base.html" %}
+{% block content %}
+
+{% from 'partials/carnet_card.html' import render_ascension %}
+
+<div class="page-header">
+    <h1>Mon Carnet</h1>
+    <button class="btn-primary" id="btnAddAscension">+ Ajouter une ascension</button>
+</div>
+
+{# Arbre pays > département > localisation > site > secteur > sous-secteur : un <details> imbriqué par niveau.
+   Chaque <details> porte data-id (id en base) ; le JS (geo-tree.js) s'en sert pour mémoriser/ouvrir les niveaux.
+   Dans chaque <summary>, trois boutons gérés par délégation d'événements :
+   .btn-node-add (ouvre la fenêtre d'ajout, pré-remplie par les data-pays/dep/localisation/site/secteur),
+   .btn-node-topo (bouton « Topo », dans le groupe des boutons du survol, sur localisation / site / secteur / sous-secteur : ouvre la liste des topos du lieu),
+   .btn-node-edit (renommer : data-table = table concernée, data-name, data-ressenti), .btn-node-del (supprimer). #}
+<div class="geo-tree">
+{# Carnet vide : message d'accueil à la place de l'arbre #}
+{% if not tree %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+    <p>Aucune ascension pour le moment.<br>Commence à remplir ton carnet !</p>
+</div>
+{% endif %}
+
+{% for p in tree %}
+<details class="node pays-node" data-id="{{ p.pays.id }}">
+    <summary>
+        <span class="node-icon">🌍</span>
+        <span class="node-name">{{ p.pays.name }}</span>
+        <div class="node-edit-btns">
+            <button class="btn-node-add" title="Ajouter une ascension ici"
+                data-pays="{{ p.pays.name }}"
+                data-dep="" data-localisation="" data-site="" data-secteur="">+</button>
+            <button class="btn-node-edit" data-table="pays" data-id="{{ p.pays.id }}" data-name="{{ p.pays.name }}" title="Renommer">✏</button>
+            <button class="btn-node-del" data-table="pays" data-id="{{ p.pays.id }}" data-name="{{ p.pays.name }}" title="Supprimer">✕</button>
+        </div>
+    </summary>
+    {% for r in p.departements %}
+    <details class="node departement-node" data-id="{{ r.departement.id }}">
+        <summary>
+            <span class="node-icon">📍</span>
+            <span class="node-name">{{ r.departement.name }}</span>
+            <div class="node-edit-btns">
+                <button class="btn-node-add" title="Ajouter une ascension ici"
+                    data-pays="{{ p.pays.name }}"
+                    data-dep="{{ r.departement.name }}" data-localisation="" data-site="" data-secteur="">+</button>
+                <button class="btn-node-edit" data-table="departement" data-id="{{ r.departement.id }}" data-name="{{ r.departement.name }}" title="Renommer">✏</button>
+                <button class="btn-node-del" data-table="departement" data-id="{{ r.departement.id }}" data-name="{{ r.departement.name }}" title="Supprimer">✕</button>
+            </div>
+        </summary>
+        {% for loc in r.localisations %}
+        <details class="node localisation-node" data-id="{{ loc.localisation.id }}">
+            <summary>
+                <span class="node-icon">🪨</span>
+                <span class="node-name">{{ loc.localisation.name }}</span>
+                <div class="node-edit-btns">
+                    <button class="btn-node-topo" data-niveau="localisation" data-id="{{ loc.localisation.id }}" data-name="{{ loc.localisation.name }}" title="Topos de ce lieu">📖 Topo</button>
+                    <button class="btn-node-add" title="Ajouter une ascension ici"
+                        data-pays="{{ p.pays.name }}"
+                        data-dep="{{ r.departement.name }}"
+                        data-localisation="{{ loc.localisation.name }}" data-site="" data-secteur="">+</button>
+                    <button class="btn-node-edit" data-table="localisation" data-id="{{ loc.localisation.id }}" data-name="{{ loc.localisation.name }}" title="Renommer">✏</button>
+                    <button class="btn-node-del" data-table="localisation" data-id="{{ loc.localisation.id }}" data-name="{{ loc.localisation.name }}" title="Supprimer">✕</button>
+                </div>
+            </summary>
+            {% for s in loc.sites %}
+            <details class="node site-node" data-id="{{ s.site.id }}">
+                <summary>
+                    <span class="node-icon">🏔</span>
+                    <span class="node-name">{{ s.site.name }}</span>
+                    <div class="node-edit-btns">
+                        <button class="btn-node-topo" data-niveau="site" data-id="{{ s.site.id }}" data-name="{{ s.site.name }}" title="Topos de ce lieu">📖 Topo</button>
+                        <button class="btn-node-add" title="Ajouter une ascension ici"
+                            data-pays="{{ p.pays.name }}"
+                            data-dep="{{ r.departement.name }}"
+                            data-localisation="{{ loc.localisation.name }}"
+                            data-site="{{ s.site.name }}" data-secteur="">+</button>
+                        <button class="btn-node-edit" data-table="site" data-id="{{ s.site.id }}" data-name="{{ s.site.name }}" title="Renommer">✏</button>
+                        <button class="btn-node-del" data-table="site" data-id="{{ s.site.id }}" data-name="{{ s.site.name }}" title="Supprimer">✕</button>
+                    </div>
+                </summary>
+                {% for sec in s.secteurs %}
+                <details class="node secteur-node" data-id="{{ sec.sec.id }}">
+                    <summary>
+                        <span class="node-icon">◈</span>
+                        <span class="node-name">{{ sec.sec.name }}</span>
+                        {% if sec.sec.ressenti %}<span class="ressenti-badge ressenti-{{ sec.sec.ressenti }}">{{ ressenti_labels[sec.sec.ressenti] }}</span>{% endif %}
+                        <span class="node-count">{{ sec.total_count }} croix</span>
+                        <div class="node-edit-btns">
+                            <button class="btn-node-topo" data-niveau="secteur" data-id="{{ sec.sec.id }}" data-name="{{ sec.sec.name }}" title="Topos de ce lieu">📖 Topo</button>
+                            <button class="btn-node-add" title="Ajouter une ascension ici"
+                                data-pays="{{ p.pays.name }}"
+                                data-dep="{{ r.departement.name }}"
+                                data-localisation="{{ loc.localisation.name }}"
+                                data-site="{{ s.site.name }}"
+                                data-secteur="{{ sec.sec.name }}">+</button>
+                            <button class="btn-node-edit" data-table="secteur" data-id="{{ sec.sec.id }}" data-name="{{ sec.sec.name }}" data-ressenti="{{ sec.sec.ressenti or '' }}" title="Renommer">✏</button>
+                            <button class="btn-node-del" data-table="secteur" data-id="{{ sec.sec.id }}" data-name="{{ sec.sec.name }}" title="Supprimer">✕</button>
+                        </div>
+                    </summary>
+
+                    {# Ascensions posées directement sur le secteur (sans sous-secteur) ; le HTML d'une carte vient de la macro #}
+                    {% if sec.ascensions %}
+                    <div class="ascensions-list">
+                    {% for item in sec.ascensions %}
+                        {{ render_ascension(item) }}
+                    {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {# Sous-secteurs : dernier niveau de l'arbre, avec compteur de croix calculé dans le template (|length) #}
+                    {% for ss in sec.sous_secteurs %}
+                    <details class="node sous-secteur-node" data-id="{{ ss.sous_secteur.id }}">
+                        <summary>
+                            <span class="node-icon">▸</span>
+                            <span class="node-name">{{ ss.sous_secteur.name }}</span>
+                            {% if ss.sous_secteur.ressenti %}<span class="ressenti-badge ressenti-{{ ss.sous_secteur.ressenti }}">{{ ressenti_labels[ss.sous_secteur.ressenti] }}</span>{% endif %}
+                            <span class="node-count">{{ ss.ascensions|length }} croix</span>
+                            <div class="node-edit-btns">
+                                <button class="btn-node-topo" data-niveau="sous_secteur" data-id="{{ ss.sous_secteur.id }}" data-name="{{ ss.sous_secteur.name }}" title="Topos de ce lieu">📖 Topo</button>
+                                <button class="btn-node-add" title="Ajouter une ascension ici"
+                                    data-pays="{{ p.pays.name }}"
+                                    data-dep="{{ r.departement.name }}"
+                                    data-localisation="{{ loc.localisation.name }}"
+                                    data-site="{{ s.site.name }}"
+                                    data-secteur="{{ sec.sec.name }}"
+                                    data-sous-secteur="{{ ss.sous_secteur.name }}">+</button>
+                                <button class="btn-node-edit" data-table="sous_secteur" data-id="{{ ss.sous_secteur.id }}" data-name="{{ ss.sous_secteur.name }}" data-ressenti="{{ ss.sous_secteur.ressenti or '' }}" title="Renommer">✏</button>
+                                <button class="btn-node-del" data-table="sous_secteur" data-id="{{ ss.sous_secteur.id }}" data-name="{{ ss.sous_secteur.name }}" title="Supprimer">✕</button>
+                            </div>
+                        </summary>
+                        <div class="ascensions-list">
+                        {% for item in ss.ascensions %}
+                            {{ render_ascension(item) }}
+                        {% endfor %}
+                        </div>
+                    </details>
+                    {% endfor %}
+                </details>
+                {% endfor %}
+            </details>
+            {% endfor %}
+        </details>
+        {% endfor %}
+    </details>
+    {% endfor %}
+</details>
+{% endfor %}
+</div>
+
+{# Fenêtre d'ajout / édition d'une ascension, en deux étapes pilotées par ascension-modal.js :
+   step1 = localisation (champs avec <datalist> d'autocomplétion remplis par le JS) + type + statut ;
+   step2 = formulaire détaillé, généré en JS dans #formContent selon le type choisi.
+   #statutSection est masquée en mode édition. #}
+<!-- MODAL AJOUT / ÉDITION -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+        <div class="modal-header">
+            <h2 id="modalTitle">Nouvelle ascension</h2>
+            <button class="btn-close" id="btnCloseModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="step" id="step1">
+                <h3>Localisation</h3>
+                <div class="form-row"><label>Pays</label><input type="text" id="inputPays" placeholder="France" list="listPays" autocomplete="off"><datalist id="listPays"></datalist></div>
+                <div class="form-row"><label>Département</label><input type="text" id="inputDepartement" placeholder="Bouches-du-Rhône" list="listDepartements" autocomplete="off"><datalist id="listDepartements"></datalist></div>
+                <div class="form-row"><label>Localisation</label><input type="text" id="inputLocalisation" placeholder="Plateau du Cengle" list="listLocalisations" autocomplete="off"><datalist id="listLocalisations"></datalist></div>
+                <div class="form-row"><label>Site</label><input type="text" id="inputSite" placeholder="Le Cengle" list="listSites" autocomplete="off"><datalist id="listSites"></datalist></div>
+                <div class="form-row"><label>Secteur</label><input type="text" id="inputSecteur" placeholder="Origine" list="listSecteurs" autocomplete="off"><datalist id="listSecteurs"></datalist></div>
+                <div class="form-row"><label>Sous-secteur <span class="optional-tag">(optionnel)</span></label><input type="text" id="inputSousSecteur" placeholder="Mur Gris" list="listSousSecteurs" autocomplete="off"><datalist id="listSousSecteurs"></datalist></div>
+                <div class="form-row" title="S'applique au secteur, ou au sous-secteur si renseigné">
+                    <label>Ressenti secteur <span class="optional-tag">(optionnel)</span></label>
+                    <select id="inputRessenti">
+                        <option value="">— Non renseigné —</option>
+                        {# Options du ressenti générées depuis le dictionnaire ressenti_labels (code -> libellé) #}
+                        {% for code, label in ressenti_labels.items() %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <h3>Type d'escalade</h3>
+                <div class="type-grid">
+                    <label class="type-option"><input type="radio" name="typeEsc" value="bloc"><span>🪨 Bloc</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="voie"><span>🧗 Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="grande_voie"><span>⛰ Grande Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_voie"><span>🔩 Trad</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_gv"><span>🔩 Trad GV</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="psychobloc"><span>🌊 Psychobloc</span></label>
+                </div>
+                <div id="statutSection">
+                    <h3>Statut</h3>
+                    <div class="type-grid">
+                        <label class="type-option"><input type="radio" name="statut" value="log" checked><span>✅ Carnet</span></label>
+                        <label class="type-option"><input type="radio" name="statut" value="projet"><span>⚡ Projet</span></label>
+                        <label class="type-option"><input type="radio" name="statut" value="ticklist"><span>📋 Tick List</span></label>
+                    </div>
+                </div>
+                <div class="modal-nav"><button class="btn-primary" id="btnStep1Next">Suivant →</button></div>
+            </div>
+            <div class="step" id="step2" style="display:none;">
+                <div id="formContent"></div>
+                <div class="modal-nav">
+                    <button class="btn-secondary" id="btnStep2Prev">← Retour</button>
+                    <button class="btn-primary" id="btnSubmit">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Fenêtres partagées avec d'autres pages (répétition, « marquer comme grimpé », « plus d'infos ») #}
+{% include 'partials/modal_repetition.html' %}
+{% include 'partials/modal_log.html' %}
+{% include 'partials/modal_infos.html' %}
+
+{# Fenêtre « Topos » d'un lieu : remplie par features/topos.js (GET /api/topos/lieu/<niveau>/<id>) quand on clique sur un bouton « Topo ». #}
+<!-- MODAL TOPOS D'UN LIEU -->
+<div class="modal-overlay" id="topoModalOverlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="topoModalTitle">Topos</h2>
+            <button class="btn-close" id="btnCloseTopoModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="topoModalBody"></div>
+            <div class="topo-add">
+                <label class="btn-secondary-sm pdf-choisir" for="topoAddFile">+ Ajouter un topo PDF…</label>
+                <input type="file" id="topoAddFile" accept="application/pdf,.pdf" hidden>
+                <p class="pdf-hint">Le PDF est enregistré une seule fois et rattaché à ce lieu. PDF uniquement, 20 Mo maximum.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Fenêtre de renommage d'un niveau géographique. #renameTable et #renameId (champs cachés) sont remplis
+   par geo-edit.js depuis les data-table / data-id du bouton cliqué ; la ligne du ressenti n'apparaît
+   que pour un secteur ou un sous-secteur. #}
+<!-- MODAL RENOMMAGE GEO -->
+<div class="modal-overlay" id="renameModalOverlay">
+    <div class="modal-box modal-small">
+        <div class="modal-header">
+            <h2 id="renameModalTitle">Renommer</h2>
+            <button class="btn-close" id="btnCloseRenameModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="renameTable">
+            <input type="hidden" id="renameId">
+            <div class="form-row"><label>Nouveau nom</label><input type="text" id="renameInput"></div>
+            <div class="form-row" id="renameRessentiRow" style="display:none;">
+                <label>Ressenti secteur <span class="optional-tag">(indicatif)</span></label>
+                <select id="renameRessenti">
+                    <option value="">— Non renseigné —</option>
+                    {% for code, label in ressenti_labels.items() %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-nav"><button class="btn-primary" id="btnSubmitRename">Enregistrer</button></div>
+        </div>
+    </div>
+</div>
+
+{# Données Python transmises au JavaScript : filter |tojson = sérialisation JSON sûre.
+   GRADES sert aux listes de cotations, OPEN_PATH au dépliage automatique (geo-tree.js). #}
+<script nonce="{{ csp_nonce }}">
+const GRADES = {{ grades | tojson }};
+const OPEN_PATH = {{ open_path | tojson }};
+</script>
+{% endblock %}

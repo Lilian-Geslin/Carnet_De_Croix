@@ -1,0 +1,174 @@
+{#
+  pages/projets.html — page « Projets » : voies/blocs en cours de travail (statut « projet »), sous forme de cartes de progression.
+  Route : GET /projets (routes/pages.py). Hérite de base.html.
+  Variables : ascensions (projets avec nb_seances, total_essais, seances, last_seance, max_essais), grades, ressenti_labels.
+  JS : pages/projets.js (filtres, tri et regroupement côté navigateur), features/seances.js (fenêtre des séances),
+  features/ascension-modal.js (ajout ; PAGE_STATUT='projet' force le statut).
+#}
+{% extends "base.html" %}
+{% block content %}
+
+{# En-tête de page + bouton d'ajout. #}
+<div class="page-header">
+    <h1>Mes Projets</h1>
+    <button class="btn-primary" id="btnAddAscension">+ Ajouter un projet</button>
+</div>
+
+{# Aucun projet : message d'accueil ; sinon barre d'outils et cartes. #}
+{% if not ascensions %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <p>Aucun projet en cours.<br>Lance-toi sur quelque chose d'ambitieux !</p>
+</div>
+{% else %}
+
+<!-- Filtres, tri et regroupement (appliqués côté navigateur) -->
+{# Barre d'outils : recherche, filtres (discipline, site, cotation minimale), tri, regroupement. Les ids pf* sont lus par projets.js. #}
+<div class="projets-toolbar">
+    <input type="text" id="pfSearch" class="pf-search" placeholder="Rechercher un projet, un site, un secteur…" autocomplete="off">
+    <select id="pfType" title="Discipline">
+        <option value="">Toutes disciplines</option>
+        <option value="bloc">Bloc</option><option value="voie">Voie</option>
+        <option value="grande_voie">Grande Voie</option><option value="trad_voie">Trad</option>
+        <option value="trad_gv">Trad GV</option><option value="psychobloc">Psychobloc</option>
+    </select>
+    <select id="pfSite" title="Site"><option value="">Tous les sites</option></select>
+    <select id="pfCot" title="Cotation minimale">
+        <option value="">Cotation min.</option>
+        {% for g in grades %}<option value="{{ loop.index0 }}">{{ g }}</option>{% endfor %}
+    </select>
+    <select id="pfSort" title="Tri">
+        <option value="cot_desc">Tri : cotation la plus dure</option>
+        <option value="cot_asc">Tri : cotation la plus facile</option>
+        <option value="last_desc">Tri : dernière séance récente</option>
+        <option value="last_asc">Tri : pas touché depuis longtemps</option>
+        <option value="essais_desc">Tri : plus d'essais</option>
+        <option value="seances_desc">Tri : plus de séances</option>
+        <option value="nom">Tri : nom A → Z</option>
+    </select>
+    <select id="pfGroup" title="Regroupement">
+        <option value="site">Grouper par site</option>
+        <option value="secteur">Grouper par secteur</option>
+        <option value="none">Sans regroupement</option>
+    </select>
+    <span class="pf-count" id="pfCount"></span>
+</div>
+
+<!-- Cartes : le JS les range dans #projetsGroups (regroupées, triées, filtrées) -->
+{# Une carte par projet. Les data-* servent au filtrage/tri/regroupement par le JS, qui range ensuite les cartes dans #projetsGroups. #}
+<div class="projet-grid" id="projetsCards">
+{% for a in ascensions %}
+<article class="projet-card type-{{ a.type }}" data-id="{{ a.id }}"
+    data-type="{{ a.type }}" data-nom="{{ a.nom }}"
+    data-search="{{ [a.nom, a.site_name, a.secteur_name, a.sous_secteur_name, a.localisation_name, a.departement_name, a.pays_name]|select|join(' ') }}"
+    data-cot="{{ a.cot_idx }}" data-essais="{{ a.total_essais }}" data-seances="{{ a.nb_seances }}" data-last="{{ a.last_date }}"
+    data-site-id="{{ a.site_id }}" data-site-label="{{ a.site_name or '—' }}"
+    data-site-sub="{{ [a.localisation_name, a.departement_name]|select|join(' · ') }}"
+    data-sec-id="{{ a.secteur_id_geo }}" data-sec-label="{{ a.secteur_name or '—' }}" data-sec-sub="{{ a.site_name or '' }}">
+    <div class="pc-top">
+        <span class="type-badge type-{{ a.type }}">
+            {% if a.type == 'bloc' %}Bloc{% elif a.type == 'voie' %}Voie{% elif a.type == 'grande_voie' %}Grande Voie{% elif a.type == 'trad_voie' %}Trad{% elif a.type == 'trad_gv' %}Trad GV{% elif a.type == 'psychobloc' %}Psychobloc{% endif %}
+        </span>
+        <span class="pc-cot">
+            {% if a.type in ('grande_voie','trad_gv') and a.cotation_haute %}<span class="cotation">{{ a.cotation }} → {{ a.cotation_haute }}</span> <span class="cotation-alpine">({{ a.cotation_haute | alpine_grade }})</span>{% elif a.cotation %}<span class="cotation">{{ a.cotation }}</span>{% endif %}
+        </span>
+        <button class="btn-icon btn-del" title="Supprimer" data-asc-id="{{ a.id }}">✕</button>
+    </div>
+    <h3 class="pc-name">{{ a.nom }}{% if a.type_depart and a.type_depart != 'normal' %}<span class="depart-tag">{% if a.type_depart == 'assis' %}DA{% elif a.type_depart == 'jete' %}Jeté{% elif a.type_depart == 'run_jump' %}R&J{% endif %}</span>{% endif %}</h3>
+    <div class="pc-geo geo-tag">{{ a.pays_name }} › {{ a.departement_name }} › {{ a.localisation_name }} › {{ a.site_name }}{% if a.secteur_name %} › {{ a.secteur_name }}{% endif %}{% if a.sous_secteur_name %} › {{ a.sous_secteur_name }}{% endif %}</div>
+    {% if a.hauteur or a.nb_longueurs or a.commentaire %}
+    <div class="card-details">
+        {% if a.hauteur %}<span class="badge-info">{{ a.hauteur }}m</span>{% endif %}
+        {% if a.nb_longueurs %}<span class="badge-info">{{ a.nb_longueurs }} L</span>{% endif %}
+        {% if a.commentaire %}<p class="card-comment">{{ a.commentaire }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="pc-progress">
+        <div class="pc-stats">
+            <div class="pc-stat"><strong>{{ a.nb_seances }}</strong><span>séance{% if a.nb_seances > 1 %}s{% endif %}</span></div>
+            <div class="pc-stat"><strong>{{ a.total_essais }}</strong><span>essai{% if a.total_essais > 1 %}s{% endif %} au total</span></div>
+            <div class="pc-stat"><strong>{{ a.last_seance.nb_essais if a.last_seance else '—' }}</strong><span>dernière séance</span></div>
+        </div>
+        {% if a.seances %}
+        <div class="pc-bars" title="Essais par séance">
+            {% for sc in a.seances[-14:] %}
+            <span class="pc-bar" style="height: {{ [18, (sc.nb_essais * 100 / a.max_essais)|round|int]|max if a.max_essais else 18 }}%" title="Séance n°{{ sc.numero }}{% if sc.date_fmt %} · {{ sc.date_fmt }}{% endif %} · {{ sc.nb_essais }} essai{% if sc.nb_essais > 1 %}s{% endif %}"></span>
+            {% endfor %}
+        </div>
+        <div class="pc-last">
+            Dernière séance (n°{{ a.last_seance.numero }}) : {{ a.last_seance.date_fmt or 'date non renseignée' }}
+            {% if a.last_seance.commentaire %}<p class="pc-last-note">{{ a.last_seance.commentaire }}</p>{% endif %}
+        </div>
+        {% else %}
+        <p class="pc-empty">Pas encore de séance : à toi de jouer !</p>
+        {% endif %}
+    </div>
+
+    <button class="btn-primary-sm btn-seance" data-asc-id="{{ a.id }}" data-type="{{ a.type }}" data-nom="{{ a.nom }}">+ Séance n°{{ a.next_numero }}</button>
+</article>
+{% endfor %}
+</div>
+{# Conteneur rempli par le JS (groupes repliables) ; message affiché quand aucun projet ne correspond. #}
+<div id="projetsGroups"></div>
+<p class="empty-filter" id="pfEmpty" style="display:none;">Aucun projet ne correspond à ces filtres.</p>
+
+{% endif %}
+
+{# Fenêtres communes : séances, marquer comme grimpé, répétition. #}
+{% include 'partials/modal_seance.html' %}
+{% include 'partials/modal_log.html' %}
+{% include 'partials/modal_repetition.html' %}
+
+<!-- Modal ajout -->
+{# Fenêtre d'ajout d'un projet en deux étapes (étape 1 : lieu et type ; étape 2 : formulaire généré par le JS). Le statut est forcé à « projet » (#forcedStatut). #}
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+        <div class="modal-header">
+            <h2 id="modalTitle">Nouveau projet</h2>
+            <button class="btn-close" id="btnCloseModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="step" id="step1">
+                <h3>Localisation</h3>
+                <div class="form-row"><label>Pays</label><input type="text" id="inputPays" placeholder="France" list="listPays" autocomplete="off"><datalist id="listPays"></datalist></div>
+                <div class="form-row"><label>Département</label><input type="text" id="inputDepartement" placeholder="Hérault" list="listDepartements" autocomplete="off"><datalist id="listDepartements"></datalist></div>
+                <div class="form-row"><label>Localisation</label><input type="text" id="inputLocalisation" placeholder="Thaurac" list="listLocalisations" autocomplete="off"><datalist id="listLocalisations"></datalist></div>
+                <div class="form-row"><label>Site</label><input type="text" id="inputSite" placeholder="Les Gorges" list="listSites" autocomplete="off"><datalist id="listSites"></datalist></div>
+                <div class="form-row"><label>Secteur</label><input type="text" id="inputSecteur" placeholder="Secteur" list="listSecteurs" autocomplete="off"><datalist id="listSecteurs"></datalist></div>
+                <div class="form-row"><label>Sous-secteur <span class="optional-tag">(optionnel)</span></label><input type="text" id="inputSousSecteur" placeholder="Mur Gris" list="listSousSecteurs" autocomplete="off"><datalist id="listSousSecteurs"></datalist></div>
+                <div class="form-row" title="S'applique au secteur, ou au sous-secteur si renseigné">
+                    <label>Ressenti secteur <span class="optional-tag">(optionnel)</span></label>
+                    <select id="inputRessenti">
+                        <option value="">— Non renseigné —</option>
+                        {% for code, label in ressenti_labels.items() %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <h3>Type d'escalade</h3>
+                <div class="type-grid">
+                    <label class="type-option"><input type="radio" name="typeEsc" value="bloc"><span>🪨 Bloc</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="voie"><span>🧗 Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="grande_voie"><span>⛰ Grande Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_voie"><span>🔩 Trad</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_gv"><span>🔩 Trad GV</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="psychobloc"><span>🌊 Psychobloc</span></label>
+                </div>
+                <input type="hidden" id="forcedStatut" value="projet">
+                <div class="modal-nav"><button class="btn-primary" id="btnStep1Next">Suivant →</button></div>
+            </div>
+            <div class="step" id="step2" style="display:none;">
+                <div id="formContent"></div>
+                <div class="modal-nav">
+                    <button class="btn-secondary" id="btnStep2Prev">← Retour</button>
+                    <button class="btn-primary" id="btnSubmit">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Données Python transmises au JavaScript. #}
+<script nonce="{{ csp_nonce }}">const GRADES = {{ grades | tojson }}; const PAGE_STATUT = 'projet';</script>
+{% endblock %}

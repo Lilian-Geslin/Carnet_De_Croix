@@ -1,0 +1,21 @@
+{#
+  Page affichée (400) quand le jeton CSRF d'un formulaire est absent ou périmé (session expirée, onglet resté ouvert).
+#}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session expirée – Carnet de Croix</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth-misc.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-brand">CARNET<span>DE CROIX</span></div>
+        <h2>Session expirée</h2>
+        <p class="error-msg">Votre session a expiré ou la requête est invalide. Rechargez la page puis réessayez.</p>
+        <p class="auth-switch"><a href="/">Retour à l'accueil</a></p>
+    </div>
+</body>
+</html>

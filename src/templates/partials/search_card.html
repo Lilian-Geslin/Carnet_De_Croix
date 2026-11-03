@@ -1,0 +1,67 @@
+{# Carte d'un résultat de recherche. by_site=true : le chemin affiché est réduit au secteur (le site est déjà en titre du groupe). #}
+{% macro card(a, by_site) %}
+<div class="ascension-card type-{{ a.type }}" data-id="{{ a.id }}">
+    <div class="card-header">
+        <div class="card-title-row">
+            <span class="type-badge type-{{ a.type }}">
+                {% if a.type == 'bloc' %}Bloc
+                {% elif a.type == 'voie' %}Voie
+                {% elif a.type == 'grande_voie' %}Grande Voie
+                {% elif a.type == 'trad_voie' %}Trad
+                {% elif a.type == 'trad_gv' %}Trad GV
+                {% elif a.type == 'psychobloc' %}Psychobloc{% endif %}
+            </span>
+            <h3 class="card-name">{{ a.nom }}
+                {% if a.type_depart and a.type_depart != 'normal' %}
+                <span class="depart-tag">{% if a.type_depart == 'assis' %}DA{% elif a.type_depart == 'jete' %}Jeté{% elif a.type_depart == 'run_jump' %}R&J{% endif %}</span>
+                {% endif %}
+                {% if a.type_arrivee and a.type_arrivee != 'normal' %}
+                <span class="depart-tag">Reta</span>
+                {% endif %}
+            </h3>
+            <div class="card-meta">
+                {% if a.type in ('grande_voie','trad_gv') and a.cotation_haute %}<span class="cotation">{{ a.cotation }} → {{ a.cotation_haute }}</span> <span class="cotation-alpine">({{ a.cotation_haute | alpine_grade }})</span>{% elif a.cotation %}<span class="cotation">{{ a.cotation }}</span>{% endif %}
+                {% if a.cotation_perso and a.cotation_perso != a.cotation %}<span class="cotation-perso">≈ {{ a.cotation_perso }}</span>{% endif %}
+                {% if a.date_fmt %}<span class="date">{{ a.date_fmt }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="card-actions">
+            {% if a.statut == 'projet' %}<span class="rc-statut rc-st-projet">Projet</span>{% elif a.statut == 'ticklist' %}<span class="rc-statut rc-st-tick">Tick list</span>{% endif %}
+            {% if a.note_beaute %}
+            <span class="stars">{% for i in range(a.note_beaute) %}★{% endfor %}{% for i in range(5-a.note_beaute) %}☆{% endfor %}</span>
+            {% endif %}
+            <button class="btn-secondary-sm btn-asc-info btn-asc-info-top" title="Plus d'informations" data-asc-id="{{ a.id }}">ⓘ<span class="info-txt"> Plus d'infos</span></button>
+        </div>
+    </div>
+    <div class="card-details">
+        {% if a.style %}
+        <span class="badge-style">
+            {% if a.style == 'a_vue' %}À vue
+            {% elif a.style == 'flash' %}Flash
+            {% elif a.style == 'essais_1' %}1 essai
+            {% elif a.style == 'essais_2' %}2 essais
+            {% elif a.style == 'essais_3' %}3 essais
+            {% elif a.style == 'essais_4' %}4 essais
+            {% elif a.style == 'essais_5' %}5 essais
+            {% elif a.style == 'plus_5' %}+5 essais{% endif %}
+        </span>
+        {% endif %}
+        {% if a.grimpe %}<span class="badge-grimpe">{% if a.grimpe == 'tete' %}En tête{% else %}Moulinette{% endif %}</span>{% endif %}
+        {% if a.pieds_nus %}<span class="badge-pied">Pieds nus 🦶</span>{% endif %}
+        {% if a.hauteur %}<span class="badge-info">{{ a.hauteur }}m</span>{% endif %}
+        {% if a.nb_longueurs %}<span class="badge-info">{{ a.nb_longueurs }} L</span>{% endif %}
+    </div>
+    <div class="card-geo">
+        <span class="geo-tag">
+            {% if not by_site %}{{ a.pays_name }}
+            {% if a.departement_name %} › {{ a.departement_name }}{% endif %}
+            {% if a.localisation_name %} › {{ a.localisation_name }}{% endif %}
+            {% if a.site_name %} › {{ a.site_name }}{% endif %}
+            {% if a.secteur_name %} › {{ a.secteur_name }}{% endif %}
+            {% else %}{% if a.secteur_name %}{{ a.secteur_name }}{% endif %}{% endif %}
+            {% if a.sous_secteur_name %} › {{ a.sous_secteur_name }}{% endif %}
+        </span>
+    </div>
+    {% if a.commentaire %}<p class="card-comment">{{ a.commentaire }}</p>{% endif %}
+</div>
+{% endmacro %}

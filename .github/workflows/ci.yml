@@ -1,0 +1,39 @@
+# Intégration continue : à chaque push et chaque pull request, lance les tests et cherche des failles connues
+# dans les dépendances. Droits minimaux : le workflow ne peut que LIRE le dépôt.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"        # chaque lundi : une faille peut être découverte sans qu'on ait touché au code
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest --cov=src --cov-report=term-missing
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Compare les versions de requirements.txt à la base des vulnérabilités connues
+      - run: pip install pip-audit && pip-audit -r requirements.txt

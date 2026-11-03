@@ -1,0 +1,33 @@
+{#
+  Fenêtre d'ajout d'une répétition d'une ascension du carnet (date, essais, mode de grimpe, cotation perso, note).
+  Gérée par features/repetition.js. Variable : grades.
+#}
+<!-- MODAL RÉPÉTITION -->
+<div class="modal-overlay" id="repModalOverlay">
+    <div class="modal-box modal-small">
+        <div class="modal-header">
+            <h2>Répétition</h2>
+            <button class="btn-close" id="btnCloseRepModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="repAscId">
+            <div class="form-row"><label>Date</label><input type="date" id="repDate"></div>
+            <div class="form-row"><label>Nombre d'essais</label>
+                <select id="repEssais">
+                    <option value="">—</option>
+                    <option value="1">1</option><option value="2">2</option>
+                    <option value="3">3</option><option value="4">4</option>
+                    <option value="5">5</option><option value="plus_5">Plus de 5</option>
+                </select>
+            </div>
+            <div class="form-row" id="repGrimpeRow" style="display:none;"><label>En tête / Moulinette <span class="req-star" title="Obligatoire">*</span></label>
+                <select id="repGrimpe"><option value="">—</option><option value="tete">En tête</option><option value="moulinette">Moulinette</option></select>
+            </div>
+            <div class="form-row"><label>Ma cotation</label><select id="repCotPerso"><option value="">—</option>{% for g in grades %}<option value="{{ g }}">{{ g }}</option>{% endfor %}</select></div>
+            <div class="form-row checkbox-row"><label><input type="checkbox" id="repPiedsNus"> Pieds nus</label></div>
+            <div class="form-row"><label>Note beauté</label><div class="star-input" id="repStars" data-val="0"></div></div>
+            <div class="form-row"><label>Commentaire</label><textarea id="repComment" rows="2"></textarea></div>
+            <div class="modal-nav"><button class="btn-primary" id="btnSubmitRep">Enregistrer</button></div>
+        </div>
+    </div>
+</div>

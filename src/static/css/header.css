@@ -1,0 +1,57 @@
+/* header.css : barre du haut, commune à toutes les pages (templates/base.html).
+   Contient le logo, le menu de navigation (Carnet, Projets, Tick list, Recherche, Stats)
+   et la zone utilisateur (nom + déconnexion). Utilise les variables de base.css. */
+
+/* ─── HEADER ─────────────────────────────── */
+/* Barre fixe en haut : « sticky » la garde visible quand on défile ; z-index 100 la place
+   au-dessus du contenu de la page, mais sous les fenêtres modales (z-index 1000). */
+header {
+    background: #0a0f0b;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 0 32px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Logo texte : le <span> (2e mot) est coloré en vert */
+.logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.logo span { color: var(--accent-light); margin-left: 6px; }
+
+/* Menu : flex: 1 prend tout l'espace libre et repousse la zone utilisateur à droite */
+nav { display: flex; gap: 4px; flex: 1; }
+
+/* Lien de menu ; « transition: all » adoucit les changements de couleur au survol */
+nav a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+/* Icônes du menu : tracé seul (pas de remplissage), couleur héritée du texte du lien */
+nav a svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+/* Survol, puis lien de la page courante (classe .active posée par le template) */
+nav a:hover { background: var(--bg-hover); color: var(--text); }
+nav a.active { background: var(--accent-glow); color: var(--accent-light); }
+
+/* Zone à droite : margin-left: auto la colle au bord droit */
+.user-area { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.user-name { font-size: 13px; color: var(--text-muted); }
+

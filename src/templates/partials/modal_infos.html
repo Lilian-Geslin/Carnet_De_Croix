@@ -1,0 +1,100 @@
+{#
+  Fenêtre « Plus d'informations » : fiche en lecture (#infoViewPane) et formulaire (#infoFormPane).
+  Gérée par features/infos-modal.js ; les sections à pastilles sont ajoutées dans #infoGrid par le JS.
+#}
+<!-- Fenêtre « Plus d'informations » d'une ascension du carnet.
+     Par défaut : fiche en lecture (texte mis en forme). Le bouton « Modifier » ouvre le formulaire
+     (ouverture, séances, topo, type de grimpe, roche, fixations / coinceurs). -->
+<div class="modal-overlay" id="infoModalOverlay">
+    <div class="modal-box modal-wide">
+        <div class="modal-header">
+            <h2>Plus d'informations</h2>
+            <button class="btn-close" id="btnCloseInfoModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="seance-nom" id="infoNom"></p>
+
+            <!-- ── Fiche en lecture ── -->
+            <div id="infoViewPane" class="info-view"></div>
+
+            <!-- ── Formulaire de saisie / modification ── -->
+            <div id="infoFormPane" style="display:none;">
+
+            <section class="info-block" id="infoOuverture">
+                <h3>Ouverture</h3>
+                <div class="info-fields ouv-grid">
+                    <div class="ouv-left">
+                        <div class="info-field"><label for="infoOuvAnnee">Année d'ouverture</label>
+                            <input type="number" id="infoOuvAnnee" min="1800" max="2100" placeholder="1998"></div>
+                        <div class="info-field"><label for="infoOuvreur">Ouvreur</label>
+                            <input type="text" id="infoOuvreur" maxlength="100" list="listOuvreurs" autocomplete="off" placeholder="Nom de l'ouvreur">
+                            <datalist id="listOuvreurs"></datalist></div>
+                    </div>
+                    <div class="ouv-right">
+                        <div class="reeq-head"><span>Rééquipé par <span class="optional-tag">(optionnel)</span></span><span>Année</span><span></span></div>
+                        <div id="infoReeq"></div>
+                        <button type="button" class="btn-secondary-sm reeq-add" id="btnReeqAdd">+ Ajouter un rééquipement</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="info-block">
+                <h3>Séances</h3>
+                <p class="seance-resume" id="infoResume"></p>
+                <div class="info-seances" id="infoSeances"></div>
+            </section>
+
+            <section class="info-block">
+                <h3>Topo consulté</h3>
+                <div class="topo-type" role="radiogroup" aria-label="Type de topo">
+                    <label><input type="radio" name="infoTopoType" value=""><span>Aucun</span></label>
+                    <label><input type="radio" name="infoTopoType" value="papier"><span>📖 Papier</span></label>
+                    <label><input type="radio" name="infoTopoType" value="pdf"><span>📄 PDF / en ligne</span></label>
+                </div>
+                <div class="info-fields" id="topoPapier" style="display:none;">
+                    <div class="info-field wide"><label for="infoTopoNom">Titre du topo</label>
+                        <input type="text" id="infoTopoNom" maxlength="150" list="listTopos" autocomplete="off" placeholder="Ex. Escalades au Cengle"></div>
+                    <div class="info-field"><label for="infoTopoEdition">Édition</label>
+                        <input type="text" id="infoTopoEdition" maxlength="100" placeholder="Ex. 3e édition"></div>
+                    <div class="info-field"><label for="infoTopoAnnee">Année de publication</label>
+                        <input type="number" id="infoTopoAnnee" min="1800" max="2100" placeholder="2019"></div>
+                    <div class="info-field"><label for="infoTopoPage">Page</label>
+                        <input type="text" id="infoTopoPage" maxlength="30" placeholder="Ex. 42"></div>
+                </div>
+                <div class="info-fields" id="topoPdf" style="display:none;">
+                    <div class="info-field wide"><label for="infoTopoNomPdf">Titre du topo <span class="optional-tag">(optionnel)</span></label>
+                        <input type="text" id="infoTopoNomPdf" maxlength="150" list="listTopos" autocomplete="off"></div>
+                    <div class="info-field wide"><label for="infoTopoLien">Lien vers le topo</label>
+                        <div class="lien-row">
+                            <input type="text" id="infoTopoLien" maxlength="500" placeholder="https://…" autocomplete="off" spellcheck="false">
+                            <a id="infoTopoOpen" class="btn-secondary-sm" target="_blank" rel="noopener noreferrer" style="display:none;">Ouvrir ↗</a>
+                        </div></div>
+                    {# Topo PDF de la bibliothèque : choisi dans la liste (un même PDF sert à toutes les ascensions du secteur) ou envoyé une seule fois. #}
+                    <div class="info-field wide"><label for="infoTopoId">PDF enregistré dans le site</label>
+                        <div class="pdf-upload" id="topoFichier">
+                            <select id="infoTopoId" class="pdf-select"></select>
+                            <a id="topoFichierOpen" class="btn-secondary-sm" target="_blank" rel="noopener noreferrer" style="display:none;">Ouvrir ↗</a>
+                            <label class="btn-secondary-sm pdf-choisir" for="infoTopoFichier" id="lblTopoFichier">Ajouter un PDF…</label>
+                            <input type="file" id="infoTopoFichier" accept="application/pdf,.pdf" hidden>
+                        </div>
+                        <p class="pdf-hint">Choisis un topo déjà enregistré, ou ajoute-le une seule fois : il sert ensuite à toutes tes ascensions. PDF uniquement, 20 Mo maximum. Retrouve-les tous avec le bouton « Topo » des lieux du Carnet.</p>
+                    </div>
+                </div>
+                <datalist id="listTopos"></datalist>
+            </section>
+
+            <div class="info-grid" id="infoGrid">
+                <!-- Les sections à pastilles (type de grimpe, roche, puis fixations ou coinceurs) sont insérées ici par le JS,
+                     selon le type de l'ascension -->
+            </div>
+            </div>
+        </div>
+        <div class="info-footer">
+            <span class="info-flash" id="infoFlash"></span>
+            <button type="button" class="btn-secondary" id="btnInfoClose">Fermer</button>
+            <button type="button" class="btn-primary" id="btnInfoEdit">✎ Ajouter / modifier des informations</button>
+            <button type="button" class="btn-secondary" id="btnInfoBack" style="display:none;">← Retour à la fiche</button>
+            <button type="button" class="btn-primary" id="btnInfoSave" style="display:none;">Enregistrer</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,21 @@
+/* layout.css : gabarit commun du contenu des pages (zone <main> et en-tête de page « titre + bouton »).
+   Chargé après header.css et buttons.css ; les pages spécifiques complètent dans leurs propres fichiers. */
+
+/* ─── MAIN LAYOUT ────────────────────────── */
+/* Contenu centré (margin auto) et limité à 1100px de large pour rester lisible sur grand écran */
+main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+/* Titre de page à gauche, boutons d'action à droite */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+.page-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 3px;
+    color: var(--text);
+}
+

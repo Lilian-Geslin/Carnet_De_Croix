@@ -1,0 +1,121 @@
+/* auth-misc.css : éléments divers — état vide, pages de connexion/inscription, barre de défilement,
+   boutons d'édition des nœuds de l'arbre. (Les règles .departement-node répètent carnet.css avec les mêmes valeurs.) */
+/* ─── EMPTY STATE ────────────────────────── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+.empty-state svg { width: 48px; height: 48px; stroke: var(--text-dim); fill: none; stroke-width: 1.5; margin-bottom: 16px; stroke-linecap: round; stroke-linejoin: round; }
+.empty-state p { line-height: 1.8; font-size: 14px; }
+
+/* ─── AUTH PAGE ──────────────────────────── */
+/* Page de connexion : formulaire centré. */
+.auth-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+/* Carte du formulaire de connexion / inscription. */
+.auth-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 40px;
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.auth-brand { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; margin-bottom: 24px; color: var(--text); }
+.auth-brand span { color: var(--accent-light); margin-left: 6px; }
+.auth-container h2 { font-size: 18px; margin-bottom: 24px; color: var(--text-muted); font-weight: 400; }
+.auth-container form { display: flex; flex-direction: column; gap: 12px; }
+.auth-container input {
+    background: #0d130e;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+.auth-container input:focus { border-color: var(--accent-light); }
+.auth-container button {
+    background: var(--accent);
+    color: #e8f0e6;
+    border: none;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+}
+.auth-container button:hover { background: var(--accent-light); }
+/* Lien « pas de compte ? » / « déjà inscrit ? ». */
+.auth-switch { margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+.auth-switch a { color: var(--accent-light); text-decoration: none; }
+/* Message d'erreur de formulaire. */
+.error-msg { color: #c0453a; font-size: 13px; margin-bottom: 14px; }
+
+/* ─── SCROLLBAR ──────────────────────────── */
+/* Barre de défilement fine aux couleurs du thème (navigateurs WebKit). */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a5c3b; }
+
+/* ─── DÉPARTEMENT NODE ───────────────────── */
+.departement-node           { margin: 8px 0 0 20px; }
+.departement-node > summary { background: #151d15; border: 1px solid #1e2c1e; font-size: 14px; }
+.departement-node > summary:hover { background: #1a221a; }
+
+/* ─── NODE EDIT BUTTONS ──────────────────── */
+details.node > summary { justify-content: flex-start; }
+
+/* Boutons ✎ / + / 🗑 d'un nœud de l'arbre : visibles seulement au survol de la ligne. */
+.node-edit-btns {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+details.node > summary:hover .node-edit-btns { display: flex; }
+
+/* Boutons modifier / supprimer un nœud. */
+.btn-node-edit, .btn-node-del {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    line-height: 1;
+}
+.btn-node-edit:hover { color: var(--accent-light); background: var(--accent-glow); }
+.btn-node-del:hover  { color: #c0453a; background: rgba(192,69,58,0.1); }
+
+/* Bouton « + » pour ajouter un élément enfant. */
+.btn-node-add {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 3px;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    line-height: 1;
+}
+.btn-node-add:hover { color: var(--accent-light); background: var(--accent-glow); }
+
+/* ─── EDIT ASCENSION BUTTON ──────────────── */
+.btn-icon.btn-edit-asc:hover { color: var(--accent-light); }
+
+
+/* Champ « piège » anti-robots de l'inscription : invisible pour un humain, rempli par un robot (voir services/antibot.py). */
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* Formulaire de déconnexion (bouton dans l'en-tête, en POST avec jeton CSRF) : s'affiche comme l'ancien lien. */
+.logout-form { display: inline; margin: 0; }
+.logout-form .btn-logout { font: inherit; cursor: pointer; }

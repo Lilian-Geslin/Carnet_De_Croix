@@ -1,0 +1,179 @@
+/* recherche.css : page Recherche — barre de recherche, filtres déroulants, calendrier de dates,
+   pastilles des filtres actifs, résultats groupés. */
+/* ═══ RECHERCHE : barre, filtres, résultats, calendrier ═══ */
+
+.range-sep { color: var(--text-dim); font-size: 12px; }
+
+.filter-empty {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.card-geo { margin-top: 6px; }
+
+/* ─── CALENDRIER DE RECHERCHE ────────────── */
+
+/* Calendrier du filtre de date : en-tête avec mois et flèches. */
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.cal-month-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    text-transform: capitalize;
+}
+
+.cal-nav {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 18px;
+    padding: 0 8px;
+    border-radius: 3px;
+    transition: all 0.15s;
+    line-height: 1.2;
+}
+.cal-nav:hover { background: var(--bg-hover); color: var(--accent-light); }
+
+/* Grille des jours (7 colonnes). */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.cal-day-label {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding-bottom: 4px;
+}
+
+/* Un jour ; .cal-day-active = jour avec au moins une ascension, .cal-day-selected = jour choisi. */
+.cal-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: default;
+    transition: all 0.15s;
+}
+
+.cal-day-empty { cursor: default; }
+
+.cal-day-active {
+    color: var(--text);
+    background: var(--bg-hover);
+    cursor: pointer;
+    font-weight: 600;
+    border: 1px solid var(--border-light);
+}
+.cal-day-active:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent-light);
+}
+
+.cal-day-selected {
+    background: var(--accent-glow) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent-light) !important;
+}
+
+/* Ligne du haut : champ de recherche + choix du périmètre (segmenté). */
+.rc-top { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.rc-searchbox { position: relative; flex: 1; min-width: 220px; }
+.rc-searchbox svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: none; stroke: var(--text-dim); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.rc-search { width: 100%; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); color: var(--text); padding: 12px 14px 12px 40px; font: inherit; font-size: 15px; outline: none; transition: border-color .15s; }
+.rc-search:focus { border-color: var(--accent-light); }
+
+/* Boutons segmentés (un seul choix possible). */
+.rc-seg { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; }
+.rc-seg-btn { cursor: pointer; }
+.rc-seg-btn input { display: none; }
+.rc-seg-btn span { display: block; padding: 9px 14px; font-size: 13px; color: var(--text-muted); background: var(--bg-card); border-right: 1px solid var(--border-light); }
+.rc-seg-btn:last-child span { border-right: 0; }
+.rc-seg-btn input:checked + span { background: var(--accent-dark); color: var(--text); font-weight: 600; }
+
+/* Rangée de boutons de filtre ; chaque filtre ouvre une fenêtre flottante (.rc-pop). */
+.rc-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.rc-fp { position: relative; }
+.rc-fbtn { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 18px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer; }
+.rc-fbtn::after { content: '▾'; font-size: 10px; opacity: .7; }
+.rc-fbtn:hover { color: var(--text); border-color: var(--accent); }
+.rc-fp.open .rc-fbtn, .rc-fbtn.on { border-color: var(--accent-light); color: var(--text); }
+.rc-fbtn.on { background: rgba(94,158,82,0.18); }
+.rc-fbtn-plus { border-style: dashed; }
+.rc-count { background: var(--accent); color: #fff; border-radius: 9px; font-size: 11px; font-weight: 600; padding: 0 6px; line-height: 17px; }
+
+/* Fenêtre flottante d'un filtre ; visible quand son conteneur a la classe .open. */
+.rc-pop { display: none; position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 210px; max-height: 70vh; overflow-y: auto; overscroll-behavior: contain; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.rc-fp.open > .rc-pop { display: block; }
+.rc-pop-cal { width: 260px; }
+.rc-pop-plus { width: min(520px, 92vw); }
+.rc-pop-title { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-dim); margin-bottom: 8px; }
+/* Option à cocher d'une liste de filtre. */
+.rc-opt { display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer; }
+.rc-opt input { accent-color: var(--accent-light); }
+.rc-range { display: flex; align-items: center; gap: 8px; }
+.rc-range select, .rc-range input, .rc-field input[type=text] { background: #0d130e; border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text); padding: 7px 9px; font: inherit; font-size: 13px; outline: none; min-width: 0; }
+.rc-range select { flex: 1; }
+.rc-range input { flex: 1; width: 100%; }
+.rc-range select:focus, .rc-range input:focus, .rc-field input[type=text]:focus { border-color: var(--accent-light); }
+.rc-hint { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+
+/* Grille des champs du filtre « Plus de filtres ». */
+.rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rc-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.rc-field > label { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-dim); }
+.rc-field-wide { grid-column: 1 / -1; }
+.rc-checks { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Case à cocher en forme de pastille. */
+.rc-check { cursor: pointer; }
+.rc-check input { display: none; }
+.rc-check span { display: inline-block; border: 1px solid var(--border-light); border-radius: 14px; padding: 3px 11px; font-size: 12px; color: var(--text-muted); }
+.rc-check input:checked + span { background: rgba(94,158,82,0.22); border-color: var(--accent-light); color: var(--text); }
+
+.rc-reset { background: none; border: 0; color: var(--text-dim); font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 4px 6px; }
+.rc-reset:hover { color: var(--text); }
+/* Pastilles des filtres actifs ; un clic retire le filtre (rouge au survol). */
+.rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-chips:not(:empty) { margin-bottom: 12px; }
+.rc-chip { background: rgba(94,158,82,0.18); border: 1px solid var(--accent); color: var(--text); border-radius: 14px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.rc-chip:hover { background: rgba(139,58,42,0.35); border-color: var(--danger); }
+
+/* Barre de résultat : résumé à gauche, tri et regroupement à droite. */
+.rc-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 6px 0 14px; padding-top: 10px; border-top: 1px solid var(--border); }
+.rc-summary { font-size: 13px; color: var(--text-muted); }
+.rc-summary strong { color: var(--text); }
+.rc-bar-right { display: flex; gap: 14px; flex-wrap: wrap; }
+.rc-sel { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.rc-sel select { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text); padding: 5px 8px; font: inherit; font-size: 13px; }
+
+/* Groupe de résultats avec son en-tête (nom, lieu, nombre). */
+.rc-group { margin-bottom: 22px; }
+.rc-group-head { display: flex; align-items: baseline; gap: 10px; padding: 0 2px 6px; margin-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+.rc-group-name { font-weight: 600; font-size: 15px; }
+.rc-group-lieu { font-size: 12px; color: var(--text-dim); flex: 1; }
+.rc-group-count { font-size: 11px; background: var(--bg-hover); color: var(--text-muted); border-radius: 9px; padding: 0 8px; line-height: 18px; }
+/* Étiquettes de statut : projet (or) et ticklist (bleu). */
+.rc-statut { font-size: 11px; font-weight: 600; border-radius: 3px; padding: 2px 7px; text-transform: uppercase; letter-spacing: .4px; }
+.rc-st-projet { background: rgba(200,168,75,.18); color: var(--or); }
+.rc-st-tick { background: rgba(74,109,124,.25); color: #8fb8c9; }
+
+@media (max-width: 640px) {
+    .rc-grid { grid-template-columns: 1fr; }
+    .rc-fp { position: static; }
+    .rc-pop, .rc-pop-cal, .rc-pop-plus { left: 12px; right: 12px; width: auto; }
+    .rc-filters { position: relative; }
+    .rc-seg { width: 100%; } .rc-seg-btn { flex: 1; text-align: center; }
+}

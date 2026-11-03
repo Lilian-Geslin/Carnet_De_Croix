@@ -1,0 +1,337 @@
+/* projets-infos.css : page Projets (cartes, regroupement, séances), fenêtre « Plus d'informations »
+   (formulaire et fiche en lecture), cotation « entre deux », ligne de rappel du mode de grimpe dans les stats. */
+/* ═══ Page Projets : cartes de progression, regroupement, filtres ═══ */
+.projets-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 20px; }
+.projets-toolbar input, .projets-toolbar select {
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); padding: 7px 10px; font: inherit; font-size: 13px; outline: none;
+}
+.projets-toolbar input:focus, .projets-toolbar select:focus { border-color: var(--accent-light); }
+.projets-toolbar select option { background: #131a14; }
+.pf-search { flex: 1 1 220px; min-width: 180px; }
+.pf-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+.empty-filter { text-align: center; color: var(--text-dim); padding: 40px 0; }
+
+/* Regroupement : bandeau doré, volontairement différent de l'arbre du carnet */
+/* Groupe de projets (par type ou par lieu) : <details> repliable. */
+.pg { margin-bottom: 26px; }
+.pg-head {
+    list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px;
+    padding: 8px 14px; margin-bottom: 14px; border-left: 4px solid var(--or);
+    background: linear-gradient(90deg, rgba(200,168,75,0.10), transparent 70%);
+}
+.pg-head::-webkit-details-marker { display: none; }
+.pg-head::before { content: '▾'; color: var(--or); font-size: 13px; }
+.pg:not([open]) > .pg-head::before { content: '▸'; }
+.pg-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
+.pg-sub { color: var(--text-muted); font-size: 12px; }
+.pg-count { margin-left: auto; background: rgba(200,168,75,0.16); color: var(--or); border-radius: 10px; padding: 1px 10px; font-size: 12px; font-weight: 600; }
+
+/* Cartes de projet en grille responsive (minimum 330 px). */
+.projet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+#projetsCards:not(:empty) { margin-bottom: 0; }
+/* Carte de projet ; bordure haute colorée selon le type (voir ci-dessous). */
+.projet-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-top: 3px solid var(--border-light);
+    border-radius: var(--radius); padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.projet-card.type-bloc        { border-top-color: var(--roche-light); }
+.projet-card.type-voie        { border-top-color: var(--accent-light); }
+.projet-card.type-grande_voie { border-top-color: var(--mousse); }
+.projet-card.type-trad_voie   { border-top-color: var(--terre); }
+.projet-card.type-trad_gv     { border-top-color: #8b6a40; }
+.projet-card.type-psychobloc  { border-top-color: var(--ciel); }
+/* Intérieur d'une carte de projet : en-tête, nom, lieu. */
+.pc-top { display: flex; align-items: center; gap: 8px; }
+.pc-cot { flex: 1; }
+.pc-name { font-size: 17px; font-weight: 600; line-height: 1.25; }
+.pc-geo { line-height: 1.4; }
+
+/* Encart de progression : nombre de séances, d'essais, histogramme des dernières séances. */
+.pc-progress { background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-top: 2px; }
+.pc-stats { display: flex; gap: 6px; }
+.pc-stat { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.pc-stat strong { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; line-height: 1.1; color: var(--or); }
+.pc-stat span { font-size: 11px; color: var(--text-muted); }
+/* Mini-histogramme : une barre par séance, la dernière en or. */
+.pc-bars { display: flex; align-items: flex-end; gap: 4px; height: 38px; margin: 10px 0 6px; border-bottom: 1px solid var(--border-light); }
+.pc-bar { flex: 1; max-width: 22px; min-height: 5px; background: var(--accent-light); border-radius: 2px 2px 0 0; opacity: 0.85; }
+.pc-bar:last-child { background: var(--or); opacity: 1; }
+.pc-last { font-size: 12px; color: var(--text-muted); }
+.pc-last-note { margin-top: 3px; font-style: italic; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc-empty { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 6px; }
+/* Bouton « Ajouter une séance ». */
+.btn-seance { align-self: stretch; padding: 9px 12px; font-size: 13px; }
+
+/* Formulaire de séance */
+/* Fenêtre de séance : nom du projet, résumé, historique des séances. */
+.seance-nom { font-size: 17px; font-weight: 600; }
+.seance-resume { color: var(--text-muted); font-size: 12px; margin: 2px 0 12px; }
+.seance-history { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; max-height: 220px; overflow-y: auto; }
+.sh-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; }
+.sh-item.editing { border-color: var(--or); }
+.sh-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh-title { font-weight: 600; font-size: 13px; }
+.sh-meta { color: var(--text-muted); font-size: 12px; flex: 1; }
+.sh-actions { display: flex; gap: 4px; }
+.sh-note { margin-top: 5px; font-size: 12px; color: var(--text-muted); font-style: italic; white-space: pre-line; }
+/* Formulaire d'ajout / modification d'une séance. */
+.seance-form { border-top: 1px solid var(--border-light); padding-top: 14px; }
+.seance-form-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--or); }
+.seance-prev-hint { color: var(--text-muted); font-size: 12px; margin: 0 0 10px; min-height: 16px; }
+/* Compteur d'essais : boutons − / + autour d'un champ numérique. */
+.counter { display: flex; align-items: center; gap: 8px; }
+.counter input[type=number] { width: 80px !important; text-align: center; font-size: 18px; font-weight: 600; }
+.counter-btn {
+    width: 44px; height: 40px; font-size: 24px; line-height: 1; cursor: pointer;
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+}
+.counter-btn:hover { background: var(--bg-hover); border-color: var(--accent-light); }
+.counter-btn:active { background: var(--accent-dark); }
+/* Message d'état de la fenêtre de séance. */
+.seance-flash { margin: 10px 0 0; padding: 7px 10px; border-radius: var(--radius-sm); font-size: 13px; background: rgba(94,158,82,0.15); color: var(--accent-light); }
+.seance-flash.error { background: rgba(139,58,42,0.25); color: #e59a8a; }
+.seance-nav { margin-top: 14px; padding-top: 0; border-top: 0; }
+/* Zone « Marquer comme grimpé » en bas de la fenêtre de séance. */
+.seance-finish { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border-light); text-align: center; }
+.btn-finish {
+    width: 100%; padding: 11px 14px; cursor: pointer; font: inherit; font-weight: 600;
+    background: rgba(200,168,75,0.14); color: var(--or); border: 1px solid var(--or); border-radius: var(--radius);
+}
+.btn-finish:hover { background: rgba(200,168,75,0.26); }
+.seance-finish-hint { margin-top: 8px; font-size: 11px; color: var(--text-dim); }
+
+/* « Plus d'informations » */
+/* « Plus d'informations » : pied de carte avec le bouton d'ouverture. */
+.card-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+/* Liste dépliable des séances liées à une ascension. */
+.info-seances { display: flex; flex-direction: column; gap: 6px; }
+.info-seance { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.info-seance summary { cursor: pointer; padding: 8px 10px; font-size: 13px; }
+.info-seance[open] summary { color: var(--or); }
+.info-seance p { padding: 0 10px 10px; font-size: 13px; color: var(--text-muted); white-space: pre-line; }
+.info-seance p.info-vide { font-style: italic; color: var(--text-dim); }
+
+@media (max-width: 600px) {
+    .projet-grid { grid-template-columns: 1fr; }
+    .pf-count { margin-left: 0; width: 100%; }
+}
+
+/* ═══ Fenêtre « Plus d'informations » : grand formulaire en sections ═══ */
+/* Fenêtre large du formulaire « Plus d'informations ». */
+.modal-box.modal-wide { max-width: 900px; position: relative; }
+/* Section du formulaire (ouverture, topo, équipement…). */
+.info-block { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-top: 14px; }
+.info-block h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--or); margin-bottom: 8px; }
+/* Disposition en deux colonnes ; .full occupe toute la largeur. */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.info-grid > .full { grid-column: 1 / -1; }
+.info-seances { display: flex; flex-direction: column; gap: 6px; }
+
+/* Choix du support de topo (papier / PDF) : deux boutons accolés. */
+.topo-type { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 12px; }
+.topo-type label { cursor: pointer; }
+.topo-type input { position: absolute; opacity: 0; pointer-events: none; }
+.topo-type span { display: block; white-space: nowrap; padding: 7px 14px; font-size: 13px; color: var(--text-muted); border-right: 1px solid var(--border-light); }
+.topo-type label:last-child span { border-right: 0; }
+.topo-type input:checked + span { background: var(--accent-dark); color: var(--text); }
+.topo-type input:focus-visible + span { outline: 2px solid var(--accent-light); outline-offset: -2px; }
+
+/* Grille de champs (3 colonnes, 2 avec .duo). */
+.info-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
+.info-fields.duo { grid-template-columns: 1fr 1fr; }
+.info-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.info-field.wide { grid-column: 1 / -1; }
+.info-field label { font-size: 12px; color: var(--text-muted); }
+.info-field input, .chip-add input {
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    padding: 8px 10px; font: inherit; font-size: 14px; outline: none; width: 100%; min-width: 0;
+}
+.info-field input:focus, .chip-add input:focus { border-color: var(--accent-light); }
+/* Champ de lien de topo + bouton d'ouverture. */
+.lien-row { display: flex; gap: 8px; align-items: center; }
+.lien-row a.btn-secondary-sm { white-space: nowrap; text-decoration: none; }
+
+/* PDF de topo enregistré dans le site : nom du fichier + boutons Ouvrir / Supprimer / Choisir. */
+.pdf-upload { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pdf-select {
+    flex: 1 1 220px; min-width: 0;
+    background: #0d130e; border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    color: var(--text); padding: 8px 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+}
+.pdf-select:focus { border-color: var(--accent-light); }
+.pdf-select option, .pdf-select optgroup { background: #131a14; color: var(--text); }
+.pdf-upload a.btn-secondary-sm, .pdf-choisir { white-space: nowrap; text-decoration: none; cursor: pointer; }
+.pdf-hint { margin: 4px 0 0; font-size: 11px; color: var(--text-dim); }
+
+/* Pastilles à choix multiples : une proposition = un bouton + une petite croix pour la retirer de la liste */
+/* Pastilles à choix multiples : bouton + petite croix ; sélectionnée en vert, retirée en pointillés. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chip { display: inline-flex; align-items: stretch; border: 1px solid var(--border-light); border-radius: 16px; overflow: hidden; background: var(--bg-card); }
+.chip-main { background: none; border: 0; color: var(--text-muted); font: inherit; font-size: 13px; padding: 5px 4px 5px 13px; cursor: pointer; }
+.chip-main:hover { color: var(--text); }
+.chip-x { background: none; border: 0; color: var(--text-dim); font-size: 11px; padding: 0 10px 0 6px; cursor: pointer; }
+.chip-x:hover { color: #e59a8a; }
+.chip:not(:has(.chip-x)) .chip-main { padding-right: 13px; }
+.chip.selected { background: rgba(94,158,82,0.22); border-color: var(--accent-light); }
+.chip.selected .chip-main { color: var(--text); font-weight: 600; }
+.chip.retired { border-style: dashed; }
+.chip-add { display: flex; gap: 8px; align-items: center; max-width: 420px; }
+
+/* Pied de la fenêtre : message d'état à gauche, boutons à droite. */
+.info-footer {
+    position: sticky; bottom: 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    padding: 12px 24px; background: #111812; border-top: 1px solid var(--border-light);
+}
+.info-flash { margin-right: auto; font-size: 13px; color: var(--accent-light); }
+.info-flash.error { color: #e59a8a; }
+
+@media (max-width: 700px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .info-fields { grid-template-columns: 1fr 1fr; }
+}
+.chip-add .btn-secondary-sm { white-space: nowrap; flex-shrink: 0; }
+
+/* Type de grimpe : barre déroulante (propositions) + pastilles choisies dessous */
+/* Barre déroulante (type de grimpe, roche, fixations, coinceurs) : champ + panneau de propositions. */
+.combo { position: relative; max-width: 460px; margin-bottom: 12px; }
+.combo-input {
+    width: 100%; background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); padding: 9px 38px 9px 12px; font: inherit; font-size: 14px; outline: none;
+}
+.combo-input:focus { border-color: var(--accent-light); }
+.combo-toggle { position: absolute; right: 0; top: 0; bottom: 0; width: 36px; background: none; border: 0; color: var(--text-muted); cursor: pointer; font-size: 14px; }
+.combo-toggle:hover { color: var(--text); }
+/* Panneau de propositions ouvert sous le champ. */
+.combo-panel {
+    position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); max-height: 250px; overflow-y: auto;
+    background: #131a14; border: 1px solid var(--border-light); border-radius: var(--radius-sm); box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.combo-item { display: flex; align-items: stretch; }
+.combo-item:hover, .combo-item.active { background: var(--bg-hover); }
+.combo-pick { flex: 1; text-align: left; background: none; border: 0; color: var(--text); font: inherit; font-size: 14px; padding: 8px 12px; cursor: pointer; }
+.combo-del { background: none; border: 0; color: var(--text-dim); font-size: 12px; padding: 0 12px; cursor: pointer; }
+.combo-del:hover { color: #e59a8a; }
+.combo-create .combo-pick { color: var(--or); }
+.combo-empty { padding: 10px 12px; color: var(--text-dim); font-size: 13px; font-style: italic; }
+/* État vide des pastilles. */
+.chips-empty { color: var(--text-dim); font-size: 12px; font-style: italic; }
+.chip.static .chip-main { cursor: default; padding-right: 4px; }
+.chip.static .chip-main:hover { color: var(--text); }
+
+/* ═══ « Plus d'informations » : fiche en lecture ═══ */
+/* Fiche en lecture : sections séparées par des filets, lignes libellé/valeur, pastilles. */
+.info-view { margin-top: 4px; }
+.iv-intro { background: rgba(212,175,55,0.08); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 12px 14px; margin: 12px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.iv-section { padding: 14px 0 12px; border-bottom: 1px solid var(--border); }
+.iv-section:last-child { border-bottom: 0; }
+.iv-section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--or); margin: 0 0 8px; }
+.iv-row { display: flex; gap: 12px; padding: 3px 0; font-size: 14px; line-height: 1.45; }
+.iv-label { flex: 0 0 150px; color: var(--text-muted); }
+.iv-value { color: var(--text); font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.iv-link { color: var(--accent-light); font-weight: 600; text-decoration: none; }
+.iv-link:hover { text-decoration: underline; }
+.iv-vide { color: var(--text-dim); font-style: italic; font-size: 13px; margin: 0; }
+.iv-resume { color: var(--text-muted); font-size: 13px; margin: 0 0 10px; }
+/* Séances en lecture : trait vert à gauche, date et nombre d'essais. */
+.iv-seances { display: flex; flex-direction: column; gap: 10px; }
+.iv-seance { border-left: 2px solid var(--accent-light); padding: 2px 0 2px 12px; }
+.iv-seance-head { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; }
+.iv-seance-head span { color: var(--text-muted); }
+.iv-note { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); white-space: pre-line; line-height: 1.5; font-style: italic; }
+.iv-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.iv-tag { background: rgba(94,158,82,0.18); border: 1px solid var(--accent-light); border-radius: 14px; padding: 3px 12px; font-size: 13px; }
+@media (max-width: 520px) { .iv-row { flex-direction: column; gap: 0; } .iv-label { flex: none; font-size: 12px; } }
+
+/* ═══ Défilement : la page derrière une fenêtre ne bouge plus ═══ */
+/* Verrouille le défilement de la page quand une fenêtre est ouverte. */
+html.modal-open, html.modal-open body { overflow: hidden; }
+html.modal-open body { padding-right: var(--scrollbar-gap, 0); }
+.modal-overlay { overscroll-behavior: contain; }
+.modal-box, .modal-body { overscroll-behavior: contain; }
+
+/* ═══ Cotation « entre deux » : bouton « / » à côté du sélecteur ═══ */
+/* Cotation « entre deux » : sélecteur + bouton « / » (voir core/cotation-select.js). */
+.cot-wrap { display: flex; gap: 6px; align-items: center; flex: 1; min-width: 0; }
+.cot-wrap select { flex: 1; min-width: 0; width: auto; }
+.cot-slash {
+    flex-shrink: 0; width: 34px; height: 34px; border-radius: var(--radius-sm); cursor: pointer;
+    background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-light);
+    font: inherit; font-size: 16px; font-weight: 600; line-height: 1;
+}
+.cot-slash:hover:not(:disabled) { color: var(--text); border-color: var(--accent-light); }
+.cot-slash.on { background: rgba(94,158,82,0.25); border-color: var(--accent-light); color: var(--text); }
+.cot-slash:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ═══ Ouverture : année + ouvreur à gauche, rééquipements à droite (même ligne) ═══ */
+/* Ouverture : année + ouvreur à gauche, rééquipements à droite. */
+.info-fields.ouv-grid { grid-template-columns: 1fr 1fr; gap: 10px 18px; align-items: start; }
+.ouv-left { display: grid; grid-template-columns: 130px 1fr; gap: 0 12px; align-items: start; }
+.ouv-left .info-field { gap: 4px; }
+.ouv-right { min-width: 0; }
+.reeq-head, .reeq-row { display: grid; grid-template-columns: 1fr 90px 28px; gap: 8px; align-items: center; }
+.reeq-head { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.reeq-row { margin-bottom: 8px; }
+.reeq-row input {
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    padding: 8px 10px; font: inherit; font-size: 14px; outline: none; width: 100%; min-width: 0;
+}
+.reeq-row input:focus { border-color: var(--accent-light); }
+.reeq-x { background: none; border: 0; color: var(--text-dim); cursor: pointer; font-size: 12px; }
+.reeq-x:hover { color: #e59a8a; }
+.reeq-add { margin-top: 0; white-space: nowrap; }
+@media (max-width: 700px) {
+    .info-fields.ouv-grid { grid-template-columns: 1fr; }
+    .ouv-left { grid-template-columns: 1fr 1fr; }
+}
+.cotation-range-row .cot-wrap { flex: 1 1 120px; }
+
+/* Fiche en lecture : Ouverture sur une seule ligne */
+/* Fiche en lecture : ouverture présentée sur une seule ligne. */
+.iv-inline { display: flex; flex-wrap: wrap; gap: 6px 36px; align-items: flex-start; }
+.iv-item { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.iv-item .iv-label { flex: none; font-size: 12px; }
+.iv-item .iv-value { font-size: 14px; }
+.iv-wrap { flex-wrap: wrap; align-items: baseline; }
+.iv-side { display: inline-flex; gap: 12px; align-items: baseline; margin-left: 28px; min-width: 0; }
+.iv-side .iv-label { flex: none; }
+@media (max-width: 520px) { .iv-side { margin-left: 0; flex-direction: column; gap: 0; } }
+
+/* Champ obligatoire */
+/* Astérisque des champs obligatoires. */
+.req-star { color: #e59a8a; font-weight: 700; }
+
+/* Phrase au-dessus des chiffres d'une voie : seules les ascensions en tête sont comptées */
+.mode-note-line { margin: 0; padding: 12px 16px 0; font-size: 12px; color: var(--text-dim); }
+.mode-note { font-style: italic; cursor: help; margin-left: 4px; }
+.chart-empty { color: var(--text-dim); font-size: 12px; font-style: italic; padding: 40px 0; text-align: center; }
+
+
+/* Rappel du nombre d'essais déjà fait sur un projet (formulaire « Marquer comme grimpé ») */
+.log-essais-hint { margin: 0 0 12px; padding: 8px 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; background: rgba(227,194,60,0.12); border: 1px solid rgba(227,194,60,0.4); color: #e3c23c; }
+
+.projet-modal-nom { margin: 0 0 12px; font-weight: 600; color: var(--text); }
+
+/* ─── BOUTON « TOPO » DES LIEUX ET FENÊTRE DES TOPOS (features/topos.js) ───────────────────── */
+/* Bouton « Topo » : dans le groupe .node-edit-btns, donc visible seulement au survol de la ligne du lieu, comme ✏ / + / ✕. */
+.btn-node-topo {
+    flex-shrink: 0; cursor: pointer;
+    background: transparent; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-muted); font-size: 12px; padding: 3px 9px; line-height: 1.2; white-space: nowrap;
+    transition: all 0.15s;
+}
+.btn-node-topo:hover { color: var(--accent-light); background: var(--accent-glow); border-color: var(--accent-light); }
+
+.topo-h { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold, #c9a84c); margin: 14px 0 6px; }
+.topo-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.topo-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.topo-link, .topo-nom { overflow-wrap: anywhere; font-size: 14px; }
+.topo-link { color: var(--accent-light); text-decoration: none; }
+.topo-link:hover { text-decoration: underline; }
+.topo-meta { font-size: 12px; color: var(--text-dim); }
+.topo-btns { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.topo-btns a.btn-secondary-sm { text-decoration: none; white-space: nowrap; }
+.topo-vide { color: var(--text-dim); font-size: 13px; }
+.topo-add { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.topo-flash { min-height: 16px; margin: 0 0 6px; font-size: 13px; color: var(--accent-light); }
+.topo-flash.error { color: #c0453a; }

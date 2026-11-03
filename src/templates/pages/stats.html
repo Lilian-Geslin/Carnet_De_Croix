@@ -1,0 +1,350 @@
+{#
+  pages/stats.html — page « Stats » : chiffres clés, détail par discipline, évolution, export/sauvegarde.
+  Route : GET /stats (routes/pages.py ; service services/stats.compute_stats). Hérite de base.html.
+  Variables : nb_pays, nb_sites… (exploration), cot_max_global, nb_total, per_type (par discipline : nb, distrib, style_distrib, métrage, sans_mode…), types, evolution, grades, type_labels.
+  Règle : voie et trad (voie) ne comptent que les ascensions en tête ; les grandes voies comptent toutes les ascensions.
+  Graphiques : Chart.js (cdnjs), construits par le script en bas de page à partir des données JSON.
+#}
+{% extends "base.html" %}
+{% block content %}
+
+{# Titre de la page. #}
+<div class="page-header">
+    <h1>Statistiques</h1>
+</div>
+
+{# Section Exploration : nombre de pays, départements, sites… visités. #}
+<!-- EXPLORATION -->
+<div class="stats-section">
+    <h2>Exploration</h2>
+    <div class="stats-grid-6">
+        <div class="stat-card"><div class="stat-number">{{ nb_pays }}</div><div class="stat-label">Pays</div></div>
+        <div class="stat-card"><div class="stat-number">{{ nb_departements }}</div><div class="stat-label">Départements</div></div>
+        <div class="stat-card"><div class="stat-number">{{ nb_localisations }}</div><div class="stat-label">Localisations</div></div>
+        <div class="stat-card"><div class="stat-number">{{ nb_sites }}</div><div class="stat-label">Sites</div></div>
+        <div class="stat-card"><div class="stat-number">{{ nb_secteurs }}</div><div class="stat-label">Secteurs</div></div>
+        <div class="stat-card"><div class="stat-number">{{ nb_sous_secteurs }}</div><div class="stat-label">Sous-secteurs</div></div>
+    </div>
+</div>
+
+{# Section Meilleure performance : cotation max toutes disciplines et total d'ascensions. #}
+<!-- MEILLEURE PERFORMANCE -->
+<div class="stats-section">
+    <h2>Meilleure performance</h2>
+    <div class="stats-grid-3">
+        <div class="stat-card stat-top">
+            <div class="stat-number gold">{{ cot_max_global or '—' }}</div>
+            <div class="stat-label">Cotation max toutes disciplines</div>
+        </div>
+        <div class="stat-card stat-highlight">
+            <div class="stat-number">{{ nb_total }}</div>
+            <div class="stat-label">Ascensions totales</div>
+        </div>
+        <div class="stat-card stat-highlight">
+            <div class="stat-number">{{ total_metres }}m</div>
+            <div class="stat-label">Mètres grimpés</div>
+        </div>
+    </div>
+</div>
+
+{# Une carte par discipline qui a au moins une ascension comptée. #}
+<!-- PAR CATÉGORIE : chiffres + graphe cotations + graphe répartition -->
+<div class="stats-section">
+    <h2>Par discipline</h2>
+    <div class="charts-grid">
+        {% for t in types %}
+        {% set dd = per_type[t] %}
+        {% set d = dd %}
+        {# Vrai pour voie et trad (voie) : seules les ascensions en tête comptent. #}
+        {% set tete_only = t in ('voie', 'trad_voie') %}
+        {% if dd.nb > 0 %}
+        <div class="discipline-block" data-type="{{ t }}">
+            <div class="discipline-header type-color-{{ t }}">{{ dd.label }}</div>
+            {# Phrase d'explication au-dessus du diagramme ; signale les anciennes ascensions sans mode renseigné (non comptées). #}
+            {% if tete_only %}
+            <p class="mode-note-line">Seules les ascensions grimpées en tête sont comptabilisées.{% if dd.sans_mode %} <span class="mode-note" title="Anciennes ascensions sans mode renseigné : modifie-les (en tête ou moulinette) pour qu'elles soient prises en compte.">{{ dd.sans_mode }} sans précision, non comptée{{ 's' if dd.sans_mode > 1 }}</span>{% endif %}</p>
+            {% endif %}
+            <div class="discipline-stats">
+                <div class="stat-card-sm">
+                    <div class="stat-number-sm" data-f="nb">{{ d.nb }}</div>
+                    <div class="stat-label">Ascensions</div>
+                </div>
+                <div class="stat-card-sm">
+                    <div class="stat-number-sm" data-f="metres">{{ d.metres }}m</div>
+                    <div class="stat-label">Mètres</div>
+                </div>
+                <div class="stat-card-sm">
+                    <div class="stat-number-sm" data-f="cot_max">{{ d.cot_max or '—' }}</div>
+                    <div class="stat-label">Max</div>
+                </div>
+            </div>
+            <div class="chart-pair">
+                {% if d.distrib %}
+                <div class="chart-inner">
+                    <div class="chart-mini-title">Cotations</div>
+                    <canvas id="chart_{{ t }}" height="160"></canvas>
+                    <div class="chart-empty" id="empty_{{ t }}" style="display:none;">Aucune ascension dans cette catégorie</div>
+                </div>
+                {% endif %}
+                {% if dd.nb > 0 %}
+                <div class="chart-inner">
+                    <div class="chart-mini-header">
+                        <div class="chart-mini-title">Répartition (à vue / flash / travaillé)</div>
+                        <label class="switch-toggle" title="Empiler le graphe de cotations par style">
+                            <input type="checkbox" class="stack-toggle" data-type="{{ t }}">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <canvas id="style_{{ t }}" height="160"></canvas>
+                    <div class="style-max-info" data-f="style_max">
+                        Max à vue : <strong>{{ d.style_max.a_vue or '—' }}</strong>
+                        &nbsp;·&nbsp; Flash : <strong>{{ d.style_max.flash or '—' }}</strong>
+                        &nbsp;·&nbsp; Travaillé : <strong>{{ d.style_max.travaille or '—' }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+{# Section Évolution : cotation max par saison, un trait par discipline. #}
+<!-- ÉVOLUTION -->
+<div class="stats-section">
+    <h2>Évolution</h2>
+    {% if evolution.series %}
+    <div class="evolution-box">
+        <div class="evolution-scroll"><div class="evolution-canvas-wrap" id="evolutionWrap"><canvas id="chart_evolution"></canvas></div></div>
+        <div class="evolution-legend" id="evolutionLegend">
+            {% for t in types if t in evolution.series %}
+            <span class="evolution-legend-item"><span class="evolution-swatch" data-type="{{ t }}"></span>{{ type_labels[t] }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <p class="export-hint">Aucune ascension datée pour le moment.</p>
+    {% endif %}
+</div>
+
+{# Section Export / Sauvegarde : CSV, PDF, sauvegarde de la base, restauration (stats-restore.js). #}
+<!-- EXPORT & SAUVEGARDE -->
+<div class="stats-section">
+    <h2>Export & Sauvegarde</h2>
+    <div class="export-actions">
+        <a href="/export/csv" class="btn-secondary">⬇ Export CSV (.zip)</a>
+        <a href="/export/pdf" class="btn-secondary">⬇ Export PDF</a>
+        {# Sauvegarde / restauration : base entière (tous les comptes), donc réservées à l'administrateur #}
+        {% if is_admin %}
+        <a href="/backup" class="btn-secondary">⬇ Sauvegarder la base</a>
+        <button type="button" class="btn-secondary" id="btnRestoreDb">⬆ Restaurer une sauvegarde</button>
+        <input type="file" id="restoreFileInput" accept=".db" style="display:none;">
+        {% endif %}
+    </div>
+    {% if is_admin %}
+    <p class="export-hint">La restauration remplace entièrement la base actuelle par le fichier importé. Une copie de l'ancienne base est conservée automatiquement en cas d'erreur.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{# Chart.js puis script de la page. #}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/vendor/chart.umd.js') }}"></script>
+<script nonce="{{ csp_nonce }}">
+const GRADES = {{ grades | tojson }};
+{# Données calculées par le serveur, transmises au JavaScript (JSON). #}
+const PER_TYPE = {{ per_type | tojson }};
+const EVOLUTION = {{ evolution | tojson }};
+
+document.addEventListener('DOMContentLoaded', () => {
+    {# Disciplines à afficher, dans l'ordre. #}
+    const types = {{ types | tojson }};
+    {# Couleur de chaque discipline (mêmes teintes que les CSS). #}
+    const colors = {
+        'bloc':        '#8a7f6e',
+        'voie':        '#4a7c3f',
+        'grande_voie': '#3d6b45',
+        'trad_voie':   '#6b4e2a',
+        'trad_gv':     '#8b6a40',
+        'psychobloc':  '#4a6d7c'
+    };
+
+    // Couleurs partagées par style, utilisées sur les deux graphes
+    const styleColors = { a_vue: '#5e9e52', flash: '#e3c23c', travaille: '#4a7ba6' };
+    const styleLabels = { a_vue: 'À vue', flash: 'Flash', travaille: 'Travaillé' };
+    const styleKeys   = ['a_vue', 'flash', 'travaille'];
+
+    {# Options d'axes communes aux graphiques à barres. #}
+    const axisOptions = {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a9677', font: { family: 'DM Sans', size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a9677', stepSize: 1, font: { family: 'DM Sans', size: 11 } } }
+    };
+
+    // Conserve une référence à chaque graphe de cotation pour pouvoir le
+    // reconstruire (normal <-> empilé par style) au clic sur l'interrupteur.
+    const cotationCharts = {};
+    const styleCharts = {};
+    const STACKED = {};
+    const view = t => PER_TYPE[t];
+
+    {# Construit (ou reconstruit) le graphe des cotations d'une discipline ; version empilée par style si demandé. #}
+    function buildCotationChart(t, stacked) {
+        const d = view(t);
+        const canvas = document.getElementById('chart_' + t);
+        if (!canvas || !d) return;
+
+        if (cotationCharts[t]) {
+            cotationCharts[t].destroy();
+        }
+
+        const empty = document.getElementById('empty_' + t);
+        if (empty) empty.style.display = d.nb ? 'none' : '';
+        canvas.style.display = d.nb ? '' : 'none';
+        if (!d.nb) return;
+
+        const distrib     = d.distrib;
+        const orderedKeys = GRADES.filter(g => distrib[g]);
+        const otherKeys   = Object.keys(distrib).filter(g => !GRADES.includes(g));
+        const allKeys     = [...orderedKeys, ...otherKeys];
+
+        let datasets;
+        if (stacked) {
+            const byStyle = d.distrib_by_style || {};
+            datasets = styleKeys.map(k => ({
+                label: styleLabels[k],
+                data: allKeys.map(g => (byStyle[g] && byStyle[g][k]) || 0),
+                backgroundColor: styleColors[k] + 'cc',
+                borderColor: styleColors[k],
+                borderWidth: 1,
+                borderRadius: 3
+            }));
+        } else {
+            const values = allKeys.map(k => distrib[k]);
+            datasets = [{
+                data: values,
+                backgroundColor: colors[t] + '99',
+                borderColor: colors[t],
+                borderWidth: 1.5,
+                borderRadius: 4
+            }];
+        }
+
+        cotationCharts[t] = new Chart(canvas, {
+            type: 'bar',
+            data: { labels: allKeys, datasets },
+            options: {
+                plugins: { legend: { display: stacked, labels: { color: '#dde8d8', font: { family: 'DM Sans', size: 11 } } } },
+                scales: stacked
+                    ? {
+                        x: { ...axisOptions.x, stacked: true },
+                        y: { ...axisOptions.y, stacked: true }
+                    }
+                    : axisOptions
+            }
+        });
+    }
+
+    types.forEach(t => {
+        const d = PER_TYPE[t];
+        if (!d || d.nb === 0) return;
+        if (!document.getElementById('chart_' + t)) return;
+        STACKED[t] = false;
+        buildCotationChart(t, false);
+    });
+
+    // ── Interrupteur : bascule le graphe de cotations en version empilée par style ──
+    {# Interrupteur « empiler par style » : reconstruit le graphe au changement. #}
+    document.querySelectorAll('.stack-toggle').forEach(input => {
+        input.addEventListener('change', () => {
+            STACKED[input.dataset.type] = input.checked;
+            buildCotationChart(input.dataset.type, input.checked);
+        });
+    });
+
+    // ── Graphe de répartition à vue / flash / travaillé ──
+    {# Graphe de répartition à vue / flash / travaillé. #}
+    function buildStyleChart(t) {
+        const canvas = document.getElementById('style_' + t);
+        if (!canvas) return;
+        if (styleCharts[t]) styleCharts[t].destroy();
+        const sd = view(t).style_distrib || { a_vue: 0, flash: 0, travaille: 0 };
+        styleCharts[t] = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: styleKeys.map(k => styleLabels[k]),
+                datasets: [{
+                    data: styleKeys.map(k => sd[k] || 0),
+                    backgroundColor: styleKeys.map(k => styleColors[k] + '99'),
+                    borderColor: styleKeys.map(k => styleColors[k]),
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: axisOptions
+            }
+        });
+    }
+    types.forEach(t => {
+        const d = PER_TYPE[t];
+        if (!d || d.nb === 0) return;
+        buildStyleChart(t);
+    });
+
+    // ── Graphe Évolution : cotation max par saison, un trait par discipline ──
+    {# Graphe d'évolution : un point par saison, hauteur = index de cotation ; « floor » représente une saison sans ascension. #}
+    const evoCanvas = document.getElementById('chart_evolution');
+    if (evoCanvas && EVOLUTION.series && Object.keys(EVOLUTION.series).length) {
+        const seasons = EVOLUTION.seasons;
+        const keys = Object.keys(EVOLUTION.series);
+        let minIdx = Infinity, maxIdx = -Infinity;
+        keys.forEach(t => EVOLUTION.series[t].forEach(v => {
+            if (v !== null && v >= 0) { minIdx = Math.min(minIdx, v); maxIdx = Math.max(maxIdx, v); }
+        }));
+        const floor = minIdx - 1;   // « rien cette saison » : on redescend tout en bas
+        document.getElementById('evolutionWrap').style.minWidth = (seasons.length * 56) + 'px';
+        document.querySelectorAll('.evolution-swatch').forEach(el => {
+            el.style.background = colors[el.dataset.type];
+        });
+        new Chart(evoCanvas, {
+            type: 'line',
+            data: {
+                labels: seasons.map(s => [s.name, s.year]),   // saison, puis l'année en dessous
+                datasets: keys.map(t => ({
+                    label: PER_TYPE[t].label,
+                    data: EVOLUTION.series[t].map(v => v === null ? null : (v < 0 ? floor : v)),
+                    borderColor: colors[t], backgroundColor: colors[t],
+                    borderWidth: 3, pointRadius: 0, pointHoverRadius: 0,
+                    tension: 0, spanGaps: false
+                }))
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        filter: item => item.parsed.y !== null,
+                        callbacks: {
+                            title: items => { const s = seasons[items[0].dataIndex]; return s.name + ' ' + s.year; },
+                            label: c => c.dataset.label + ' : ' + (c.parsed.y <= floor ? 'aucune ascension' : GRADES[c.parsed.y])
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' },
+                         ticks: { color: '#7a9677', autoSkip: false, maxRotation: 0, font: { family: 'DM Sans', size: 11 } } },
+                    y: { type: 'linear', min: floor, max: Math.min(GRADES.length - 1, maxIdx + 1),
+                         grid: { color: 'rgba(255,255,255,0.04)' },
+                         ticks: { color: '#7a9677', stepSize: 1, font: { family: 'DM Sans', size: 11 },
+                                  callback: v => (Number.isInteger(v) && v > floor) ? GRADES[v] : '' } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{#
+  pages/ticklist.html — page « Tick list » : les envies (statut « ticklist »), rendues par pages/ticklist.js.
+  Route : GET /ticklist (routes/pages.py). Hérite de base.html.
+  Variables : envies (liste sérialisée en JSON pour le JS), grades, ressenti_labels, catégories d'envie.
+  Le JS construit l'en-tête (#tlHead), les groupes ou les paliers (#tlBody) et gère recherche, tri, regroupement, catégories.
+#}
+{% extends "base.html" %}
+{% block content %}
+
+{# En-tête de page + bouton d'ajout. #}
+<div class="page-header">
+    <h1>Ma Tick List</h1>
+    <button class="btn-primary" id="btnAddAscension">+ Ajouter</button>
+</div>
+
+{# Tick list vide : message d'accueil ; sinon résumé, barre d'outils et liste. #}
+{% if not envies %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h14v14H5V5zm3 7l2 2 4-4"/></svg>
+    <p>Ta liste d'envies est vide.<br>Ajoute des objectifs à cocher !</p>
+</div>
+{% else %}
+{# Résumé (total, répartition) : rempli par le JS. #}
+<section class="tl-head" id="tlHead" aria-label="Résumé de la tick list"></section>
+
+{# Barre d'outils : recherche, discipline, regroupement, tri, catégories. Les ids tl* sont lus par ticklist.js. #}
+<div class="tl-toolbar">
+    <div class="tl-views" role="group" aria-label="Vue">
+        <button type="button" class="active" data-view="liste">Liste</button>
+        <button type="button" data-view="paliers">Paliers</button>
+    </div>
+    <input type="search" id="tlSearch" placeholder="Rechercher une voie, un site…" autocomplete="off">
+    <select id="tlType" title="Discipline"><option value="">Toutes les disciplines</option></select>
+    <select id="tlGroup" title="Regrouper">
+        <option value="site">Regrouper par site</option>
+        <option value="categorie">Regrouper par catégorie</option>
+        <option value="aucun">Sans regroupement</option>
+    </select>
+    <select id="tlSort" title="Tri">
+        <option value="cot_desc">Tri : cotation la plus dure</option>
+        <option value="cot_asc">Tri : cotation la plus facile</option>
+        <option value="nom">Tri : nom</option>
+    </select>
+    <div class="tl-cats" id="tlCats" role="group" aria-label="Catégorie"></div>
+    <span class="tl-count" id="tlCount"></span>
+</div>
+
+{# Corps de la liste : rempli par le JS ; message affiché quand aucun résultat. #}
+<div id="tlBody" class="tl-body"></div>
+<div class="tl-empty" id="tlEmpty" style="display:none;">Aucune envie ne correspond à ces filtres.</div>
+{% endif %}
+
+{# Fenêtres communes : marquer comme grimpé, répétition, et séances (« ⚡ Projet » ouvre le formulaire de séance complet : date, essais, mini-journal). #}
+{% include 'partials/modal_log.html' %}
+{% include 'partials/modal_seance.html' %}
+{% include 'partials/modal_repetition.html' %}
+
+<!-- Modal ajout -->
+{# Fenêtre d'ajout à la tick list en deux étapes (le statut est forcé à « ticklist » via #forcedStatut). #}
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+        <div class="modal-header">
+            <h2 id="modalTitle">Ajouter à la tick list</h2>
+            <button class="btn-close" id="btnCloseModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="step" id="step1">
+                <h3>Localisation</h3>
+                <div class="form-row"><label>Pays</label><input type="text" id="inputPays" placeholder="France" list="listPays" autocomplete="off"><datalist id="listPays"></datalist></div>
+                <div class="form-row"><label>Département</label><input type="text" id="inputDepartement" placeholder="Hérault" list="listDepartements" autocomplete="off"><datalist id="listDepartements"></datalist></div>
+                <div class="form-row"><label>Localisation</label><input type="text" id="inputLocalisation" placeholder="Thaurac" list="listLocalisations" autocomplete="off"><datalist id="listLocalisations"></datalist></div>
+                <div class="form-row"><label>Site</label><input type="text" id="inputSite" placeholder="Les Gorges" list="listSites" autocomplete="off"><datalist id="listSites"></datalist></div>
+                <div class="form-row"><label>Secteur</label><input type="text" id="inputSecteur" placeholder="Secteur" list="listSecteurs" autocomplete="off"><datalist id="listSecteurs"></datalist></div>
+                <div class="form-row"><label>Sous-secteur <span class="optional-tag">(optionnel)</span></label><input type="text" id="inputSousSecteur" placeholder="Mur Gris" list="listSousSecteurs" autocomplete="off"><datalist id="listSousSecteurs"></datalist></div>
+                <div class="form-row" title="S'applique au secteur, ou au sous-secteur si renseigné">
+                    <label>Ressenti secteur <span class="optional-tag">(optionnel)</span></label>
+                    <select id="inputRessenti">
+                        <option value="">— Non renseigné —</option>
+                        {% for code, label in ressenti_labels.items() %}
+                        <option value="{{ code }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <h3>Type d'escalade</h3>
+                <div class="type-grid">
+                    <label class="type-option"><input type="radio" name="typeEsc" value="bloc"><span>🪨 Bloc</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="voie"><span>🧗 Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="grande_voie"><span>⛰ Grande Voie</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_voie"><span>🔩 Trad</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="trad_gv"><span>🔩 Trad GV</span></label>
+                    <label class="type-option"><input type="radio" name="typeEsc" value="psychobloc"><span>🌊 Psychobloc</span></label>
+                </div>
+                <input type="hidden" id="forcedStatut" value="ticklist">
+                <div class="modal-nav"><button class="btn-primary" id="btnStep1Next">Suivant →</button></div>
+            </div>
+            <div class="step" id="step2" style="display:none;">
+                <div id="formContent"></div>
+                <div class="modal-nav">
+                    <button class="btn-secondary" id="btnStep2Prev">← Retour</button>
+                    <button class="btn-primary" id="btnSubmit">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Données Python transmises au JavaScript (liste des envies et catégories). #}
+<script nonce="{{ csp_nonce }}">const GRADES = {{ grades | tojson }}; const PAGE_STATUT = 'ticklist'; const ENVIES = {{ envies | tojson }}; const ENVIE_CATS = {{ categories | tojson }};</script>
+{% endblock %}

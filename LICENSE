@@ -1,0 +1,15 @@
+Copyright (c) 2026 Lilian Geslin. Tous droits réservés.
+All rights reserved.
+
+Le code source de Carnet de Croix est visible à titre de démonstration (portfolio).
+Aucune licence d'utilisation, de copie, de modification, de redistribution
+ou d'hébergement n'est accordée. Toute réutilisation, totale ou partielle,
+nécessite mon accord écrit préalable.
+
+The source code of Carnet de Croix is made visible for demonstration purposes only.
+No permission is granted to use, copy, modify, distribute or host it, in whole
+or in part, without prior written permission from the author.
+
+Exceptions : les polices dans src/static/fonts/ (SIL Open Font License) et la
+bibliothèque Chart.js dans src/static/js/vendor/ (licence MIT) restent soumises à
+leur propre licence, fournie avec les fichiers.

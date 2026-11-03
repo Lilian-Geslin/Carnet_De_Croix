@@ -1,0 +1,93 @@
+{#
+  base.html — gabarit commun de toutes les pages (sauf connexion/inscription).
+  Contient : <head> (polices hébergées + feuilles de style), en-tête avec le menu, bloc « content », puis les scripts.
+  Le lien du menu correspondant à request.path reçoit la classe « active ».
+  Ordre des scripts : core (utilitaires) → features (fenêtres) → pages → main.js ; chaque page peut ajouter ses scripts dans le bloc « scripts ».
+#}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnet de Croix</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {# Feuilles de style : base.css d'abord (variables de couleur), les autres s'en servent #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/carnet.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals-forms.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth-misc.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/projets-infos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ticklist.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/recherche.css') }}">
+</head>
+<body>
+    {# En-tête : logo, menu, utilisateur connecté + déconnexion #}
+    <header>
+        <a href="/carnet" class="logo">CARNET<span>DE CROIX</span></a>
+        <nav>
+            <a href="/carnet" class="{% if request.path == '/carnet' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Carnet
+            </a>
+            <a href="/projets" class="{% if request.path == '/projets' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Projets
+            </a>
+            <a href="/ticklist" class="{% if request.path == '/ticklist' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h14v14H5V5zm3 7l2 2 4-4"/></svg>
+                Tick List
+            </a>
+            <a href="/recherche" class="{% if request.path == '/recherche' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Recherche
+            </a>
+            <a href="/stats" class="{% if request.path == '/stats' %}active{% endif %}">
+                <svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Stats
+            </a>
+        </nav>
+        <div class="user-area">
+            {% if session.user_id %}
+            <span class="user-name">{{ session.user_name }}</span>
+            <form action="/logout" method="POST" class="logout-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-logout">Déconnexion</button>
+            </form>
+            {% endif %}
+        </div>
+    </header>
+
+    {# Contenu propre à chaque page #}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {# Scripts : tous chargés sur toutes les pages ; chacun ne s'active que si ses éléments HTML existent #}
+    <script src="{{ url_for('static', filename='js/core/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/grades.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/stars.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/cotation-select.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/geo-autocomplete.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/noms.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/ascension-form.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/geo-tree.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/ascension-modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/geo-edit.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/topos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/repetition.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/quick-modals.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/seances.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/projets.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/features/infos-modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/ticklist.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/stats-restore.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

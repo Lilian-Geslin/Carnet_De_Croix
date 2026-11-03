@@ -1,0 +1,103 @@
+/* Polices hébergées sur ce site (licence SIL OFL, voir static/fonts/) : aucun appel à Google (CSP : font-src 'self'). */
+@font-face {
+    font-family: 'Bebas Neue';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/bebas-neue-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('../fonts/dm-sans-latin-300-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/dm-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/dm-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: normal;
+    font-weight: 600 700;
+    font-display: swap;
+    src: url('../fonts/dm-sans-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'DM Sans';
+    font-style: italic;
+    font-weight: 300;
+    font-display: swap;
+    src: url('../fonts/dm-sans-latin-300-italic.woff2') format('woff2');
+}
+
+/* ═══════════════════════════════════════════
+   CARNET DE CROIX — CSS
+   Palette : nature, roche, forêt
+═══════════════════════════════════════════ */
+
+/* base.css : fondation du thème (chargé en premier, depuis base.html).
+   Il définit les variables CSS (:root) réutilisées par TOUS les autres fichiers
+   via var(--nom), puis la remise à zéro et le style de base de la page.
+   Changer une couleur ici la change partout dans l'application. */
+
+/* ─── Variables (palette) ────────────────── */
+:root {
+    /* Fonds : du plus sombre (page) au plus clair (survol), teinte vert très foncé */
+    --bg:           #0d110e;  /* fond de la page entière */
+    --bg-card:      #131a14;  /* fond des cartes, champs et panneaux */
+    --bg-hover:     #1a2318;  /* fond au survol / zones légèrement en relief */
+
+    /* Bordures */
+    --border:       #1f2b20;  /* bordure discrète (séparateurs, cartes) */
+    --border-light: #2a3d2b;  /* bordure plus visible (champs, boutons, fenêtres) */
+
+    /* Textes */
+    --text:         #dde8d8;  /* texte principal (blanc cassé verdâtre) */
+    --text-muted:   #7a9677;  /* texte secondaire (libellés, infos) */
+    --text-dim:     #4a6349;  /* texte très discret (aides, valeurs vides) */
+
+    /* Couleur d'accent : le vert « forêt » de l'application */
+    --accent:       #4a7c3f;                  /* vert forêt : boutons, bordures actives */
+    --accent-light: #5e9e52;                  /* vert plus clair : survol, liens, éléments actifs */
+    --accent-dark:  #365c2d;                  /* vert sapin foncé : fond d'un choix sélectionné, appui */
+    --accent-glow:  rgba(74, 124, 63, 0.15);  /* halo vert translucide : fond d'un élément actif */
+
+    /* Couleurs des disciplines et des styles (voir type-* dans carnet.css) */
+    --roche:        #8a7f6e;  /* gris roche */
+    --roche-light:  #a89b87;  /* roche claire : bloc */
+    --mousse:       #3d6b45;  /* vert mousse : grande voie */
+    --terre:        #6b4e2a;  /* brun terre : voie trad */
+    --ciel:         #4a6d7c;  /* bleu ciel : psychobloc et type de grimpe */
+    --or:           #c8a84b;  /* or : étoiles, projets, éléments mis en avant */
+
+    /* Divers */
+    --danger:       #8b3a2a;  /* rouge brique : suppression / alerte */
+    --radius:       8px;      /* arrondi des cartes et blocs */
+    --radius-sm:    4px;      /* petit arrondi (boutons, champs) */
+}
+
+/* ─── Remise à zéro et page ──────────────── */
+/* Plus de marges ni de paddings par défaut ; box-sizing: border-box fait que
+   width/height incluent le padding et la bordure (calculs de taille plus simples). */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'DM Sans', sans-serif;  /* police chargée par Google Fonts dans base.html */
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+}

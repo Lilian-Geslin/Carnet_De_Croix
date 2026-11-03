@@ -1,0 +1,349 @@
+{#
+  pages/recherche.html — page « Recherche » : filtres combinables (statut, type, cotation, style, beauté, dates, ouverture, topo, roche…).
+  Route : GET /recherche (routes/pages.py ; service services/recherche.py). Hérite de base.html.
+  Le formulaire GET est aussi envoyé en fetch par le script de fin de page : on redemande la page et on remplace
+  uniquement #rcResults, #rcSummary et #calBox (mise à jour en direct, sans rechargement complet).
+  Variables : ascensions / groupes, summary, filtres actifs (*_f), options des listes, calendar_weeks, type_labels, style_labels…
+#}
+{% extends "base.html" %}
+{% block content %}
+
+{# Macro qui rend une carte de résultat. #}
+{% from 'partials/search_card.html' import card %}
+
+<div class="page-header">
+    <h1>Recherche</h1>
+</div>
+
+{# Formulaire de recherche : chaque champ porte un data-chip (texte de la pastille du filtre actif). #}
+<form method="GET" action="/recherche" id="filterForm" autocomplete="off">
+
+    <!-- Barre de recherche + où chercher -->
+    {# Ligne du haut : champ de recherche + périmètre (Carnet, Projets, Tick list, Tout). #}
+    <div class="rc-top">
+        <div class="rc-searchbox">
+            <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" name="q" id="rcQ" value="{{ q }}" placeholder="Nom, site, secteur, commentaire…" class="rc-search" list="listRecherche" autocomplete="off">
+            <datalist id="listRecherche"></datalist>
+        </div>
+        <div class="rc-seg" role="group" aria-label="Où chercher">
+            {% for val, lab in [('log','Carnet'),('projet','Projets'),('ticklist','Tick list'),('tout','Tout')] %}
+            <label class="rc-seg-btn"><input type="radio" name="statut" value="{{ val }}" {% if statut_f == val %}checked{% endif %}><span>{{ lab }}</span></label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Boutons de filtres -->
+    {# Boutons de filtre ; chacun ouvre une fenêtre flottante (.rc-fp / .rc-pop). #}
+    <div class="rc-filters" id="rcFilters">
+
+        <div class="rc-fp" data-key="type">
+            <button type="button" class="rc-fbtn" data-label="Type">Type</button>
+            <div class="rc-pop">
+                {% for t in types %}
+                <label class="rc-opt"><input type="checkbox" name="type" value="{{ t }}" data-chip="{{ type_labels[t] }}" {% if t in types_f %}checked{% endif %}><span class="type-badge type-{{ t }}">{{ type_labels[t] }}</span></label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rc-fp" data-key="cot">
+            <button type="button" class="rc-fbtn" data-label="Cotation">Cotation</button>
+            <div class="rc-pop">
+                <div class="rc-pop-title">Fourchette de cotation</div>
+                <div class="rc-range">
+                    <select name="cot_min" id="rcCotMin"><option value="">Min</option>{% for g in grades %}<option value="{{ g }}" {% if g == cot_min_f %}selected{% endif %}>{{ g }}</option>{% endfor %}</select>
+                    <span class="range-sep">→</span>
+                    <select name="cot_max" id="rcCotMax"><option value="">Max</option>{% for g in grades %}<option value="{{ g }}" {% if g == cot_max_f %}selected{% endif %}>{{ g }}</option>{% endfor %}</select>
+                </div>
+                <div class="rc-hint">Une cotation « 7a/+ » compte comme 7a.</div>
+            </div>
+        </div>
+
+        <div class="rc-fp" data-key="style">
+            <button type="button" class="rc-fbtn" data-label="Essais">Essais</button>
+            <div class="rc-pop">
+                {% for s in styles %}
+                <label class="rc-opt"><input type="checkbox" name="style" value="{{ s }}" data-chip="{{ style_labels[s] }}" {% if s in styles_f %}checked{% endif %}><span class="badge-style">{{ style_labels[s] }}</span></label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rc-fp" data-key="beaute">
+            <button type="button" class="rc-fbtn" data-label="Beauté">Beauté</button>
+            <div class="rc-pop">
+                {% for i in range(1, 6) %}
+                <label class="rc-opt"><input type="checkbox" name="beaute" value="{{ i }}" data-chip="{{ i }}★" {% if i|string in beautes_f %}checked{% endif %}>
+                    <span class="stars" style="font-size:13px; letter-spacing:0;">{% for j in range(i) %}★{% endfor %}{% for j in range(5-i) %}<span style="opacity:0.2;">★</span>{% endfor %}</span></label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="rc-fp" data-key="date">
+            <button type="button" class="rc-fbtn" data-label="Date">Date</button>
+            <div class="rc-pop rc-pop-cal" id="calBox">
+                <div class="calendar-header">
+                    <a href="/recherche?mois={{ prev_month }}" class="cal-nav" data-cal="{{ prev_month }}">‹</a>
+                    <span class="cal-month-label">{{ month_name }} {{ cal_year }}</span>
+                    <a href="/recherche?mois={{ next_month }}" class="cal-nav" data-cal="{{ next_month }}">›</a>
+                </div>
+                <div class="calendar-grid">
+                    {% for d in ['L','M','M','J','V','S','D'] %}<div class="cal-day-label">{{ d }}</div>{% endfor %}
+                    {% for week in calendar_weeks %}{% for day in week %}
+                        {% if day is none %}<div class="cal-day cal-day-empty"></div>
+                        {% else %}
+                        <label class="cal-day {% if day.has_data %}cal-day-active{% endif %} {% if day.selected %}cal-day-selected{% endif %}">
+                            <input type="checkbox" name="date" value="{{ day.date }}" data-chip="{{ day.date[8:10] }}/{{ day.date[5:7] }}/{{ day.date[0:4] }}" {% if day.selected %}checked{% endif %} {% if not day.has_data %}disabled{% endif %} style="display:none;">
+                            {{ day.day }}
+                        </label>
+                        {% endif %}
+                    {% endfor %}{% endfor %}
+                </div>
+                <input type="hidden" name="mois" id="rcMois" value="{{ cal_year }}-{{ '%02d'|format(cal_month) }}">
+                {% for d in dates_f %}{% if d[:7] != cal_year|string ~ '-' ~ ('%02d'|format(cal_month)) %}<input type="hidden" name="date" value="{{ d }}" data-chip="{{ d[8:10] }}/{{ d[5:7] }}/{{ d[0:4] }}">{% endif %}{% endfor %}
+            </div>
+        </div>
+
+        <div class="rc-fp" data-key="plus">
+            <button type="button" class="rc-fbtn rc-fbtn-plus" data-label="Plus de filtres">Plus de filtres</button>
+            <div class="rc-pop rc-pop-plus">
+                <div class="rc-grid">
+                    <div class="rc-field">
+                        <label>Année d'ouverture</label>
+                        <div class="rc-range">
+                            <input type="number" name="annee_min" value="{{ annee_min_f }}" placeholder="De" min="1800" max="2100" data-chip="Ouverte depuis">
+                            <span class="range-sep">→</span>
+                            <input type="number" name="annee_max" value="{{ annee_max_f }}" placeholder="À" min="1800" max="2100" data-chip="Ouverte jusqu'en">
+                        </div>
+                    </div>
+                    <div class="rc-field">
+                        <label>Ouvreur</label>
+                        <input type="text" name="ouvreur" value="{{ ouvreur_f }}" placeholder="Nom de l'ouvreur" list="rcOuvreurs" data-chip="Ouvreur">
+                        <datalist id="rcOuvreurs">{% for o in ouvreur_options %}<option value="{{ o }}">{% endfor %}</datalist>
+                    </div>
+                    <div class="rc-field">
+                        <label>Topo</label>
+                        <input type="text" name="topo" value="{{ topo_f }}" placeholder="Titre ou édition du topo" list="rcTopos" data-chip="Topo">
+                        <datalist id="rcTopos">{% for o in topo_options %}<option value="{{ o }}">{% endfor %}</datalist>
+                    </div>
+                    <div class="rc-field">
+                        <label>Hauteur (m)</label>
+                        <div class="rc-range">
+                            <input type="number" name="hauteur_min" value="{{ hauteur_min_f }}" placeholder="Min" step="0.5" min="0" data-chip="Hauteur ≥">
+                            <span class="range-sep">→</span>
+                            <input type="number" name="hauteur_max" value="{{ hauteur_max_f }}" placeholder="Max" step="0.5" min="0" data-chip="Hauteur ≤">
+                        </div>
+                    </div>
+                    <div class="rc-field rc-field-wide">
+                        <label>Type de roche</label>
+                        <div class="rc-checks">
+                        {% for r in roche_options %}<label class="rc-check"><input type="checkbox" name="roche" value="{{ r }}" data-chip="{{ r }}" {% if r in roches_f %}checked{% endif %}><span>{{ r }}</span></label>
+                        {% else %}<span class="filter-empty">Aucun type de roche renseigné</span>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="rc-field rc-field-wide">
+                        <label>Type de grimpe</label>
+                        <div class="rc-checks">
+                        {% for r in tgrimpe_options %}<label class="rc-check"><input type="checkbox" name="tgrimpe" value="{{ r }}" data-chip="{{ r }}" {% if r in tgrimpes_f %}checked{% endif %}><span>{{ r }}</span></label>
+                        {% else %}<span class="filter-empty">Aucun type de grimpe renseigné</span>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="rc-field rc-field-wide">
+                        <label>Encordement</label>
+                        <div class="rc-checks">
+                            <label class="rc-check"><input type="checkbox" name="mode" value="tete" data-chip="En tête" {% if 'tete' in modes_f %}checked{% endif %}><span>En tête</span></label>
+                            <label class="rc-check"><input type="checkbox" name="mode" value="moulinette" data-chip="Moulinette" {% if 'moulinette' in modes_f %}checked{% endif %}><span>Moulinette</span></label>
+                            <label class="rc-check"><input type="checkbox" name="pieds_nus" value="1" data-chip="Pieds nus" {% if pieds_nus_f %}checked{% endif %}><span>Pieds nus 🦶</span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="rc-reset" id="rcReset" hidden>Tout effacer</button>
+    </div>
+
+    <!-- Pastilles des filtres actifs (remplies par le script) -->
+    {# Pastilles des filtres actifs (remplies par le script de fin de page). #}
+    <div class="rc-chips" id="rcChips"></div>
+
+    <!-- Tri + regroupement -->
+    {# Barre de résultat : nombre, sites, cotation max, mètres ; choix du tri et du regroupement. #}
+    <div class="rc-bar">
+        <div id="rcSummary" class="rc-summary">
+            <strong>{{ summary.count }}</strong> résultat{% if summary.count > 1 %}s{% endif %}
+            {% if summary.count %}
+              {% if summary.sites %} · {{ summary.sites }} site{% if summary.sites > 1 %}s{% endif %}{% endif %}
+              {% if summary.max %} · cotation max <strong>{{ summary.max }}</strong>{% endif %}
+              {% if summary.metres %} · {{ summary.metres }} m{% endif %}
+            {% endif %}
+        </div>
+        <div class="rc-bar-right">
+            <label class="rc-sel">Trier
+                <select name="tri">
+                    {% for val, label in [('date_desc','Date (récente)'),('date_asc','Date (ancienne)'),('cotation_desc','Cotation (max)'),('cotation_asc','Cotation (min)'),('nom','Nom (A→Z)'),('style_asc','Essais (à vue en 1er)'),('style_desc','Essais (travaillé en 1er)'),('beaute_desc','Beauté (max)'),('beaute_asc','Beauté (min)'),('hauteur_desc','Hauteur (max)'),('hauteur_asc','Hauteur (min)')] %}
+                    <option value="{{ val }}" {% if tri == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="rc-sel">Afficher
+                <select name="groupe">
+                    <option value="site" {% if groupe == 'site' %}selected{% endif %}>Par site</option>
+                    <option value="plat" {% if groupe == 'plat' %}selected{% endif %}>À plat</option>
+                </select>
+            </label>
+        </div>
+    </div>
+</form>
+
+<!-- RÉSULTATS -->
+{# Résultats : message vide, groupes par site, ou liste à plat. #}
+<div id="rcResults">
+{% if not ascensions %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <p>Aucune ascension trouvée.<br>Essaie d'autres critères.</p>
+</div>
+{% elif groupe == 'site' %}
+    {% for g in groupes %}
+    <section class="rc-group">
+        <div class="rc-group-head">
+            <span class="rc-group-name">🏔 {{ g.site }}</span>
+            {% if g.lieu %}<span class="rc-group-lieu">{{ g.lieu }}</span>{% endif %}
+            <span class="rc-group-count">{{ g['items']|length }}</span>
+        </div>
+        <div class="flat-list">{% for a in g['items'] %}{{ card(a, true) }}{% endfor %}</div>
+    </section>
+    {% endfor %}
+{% else %}
+    <div class="flat-list">{% for a in ascensions %}{{ card(a, false) }}{% endfor %}</div>
+{% endif %}
+</div>
+
+{# Fenêtre « Plus d'informations » (ouverte depuis les cartes). #}
+{% include 'partials/modal_infos.html' %}
+
+{# Script de la page : filtres, pastilles et mise à jour en direct. #}
+<script nonce="{{ csp_nonce }}">
+(function () {
+    const form = document.getElementById('filterForm');
+    const chipsBox = document.getElementById('rcChips');
+    const resetBtn = document.getElementById('rcReset');
+    {# timer = délai avant envoi (anti-rebond) ; req = numéro de la dernière requête, pour ignorer les réponses périmées. #}
+    let timer = null, req = 0;
+
+    // ── Ouverture / fermeture des fenêtres de filtres ──
+    {# Ferme toutes les fenêtres de filtre sauf celle indiquée. #}
+    function closeAll(except) {
+        document.querySelectorAll('.rc-fp.open').forEach(fp => { if (fp !== except) fp.classList.remove('open'); });
+    }
+    document.querySelectorAll('.rc-fbtn').forEach(btn => btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const fp = btn.closest('.rc-fp');
+        closeAll(fp);
+        fp.classList.toggle('open');
+    }));
+    document.addEventListener('click', e => { if (!e.target.closest('.rc-fp')) closeAll(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+    // ── Pastilles + compteurs sur les boutons ──
+    {# Liste des filtres actifs : clé du bouton, texte de la pastille, et fonction pour le retirer. #}
+    function activeFilters() {
+        const out = [];   // {key, label, undo()}
+        const els = form.elements;
+        const add = (key, label, undo) => out.push({key, label, undo});
+        form.querySelectorAll('input[type=checkbox][name]:checked, input[type=hidden][name=date]').forEach(el => {
+            if (!el.dataset.chip) return;
+            const key = el.closest('.rc-fp') ? el.closest('.rc-fp').dataset.key : 'x';
+            add(key, el.dataset.chip, () => { if (el.type === 'hidden') el.remove(); else el.checked = false; });
+        });
+        const cmin = els.cot_min.value, cmax = els.cot_max.value;
+        if (cmin || cmax) add('cot', cmin && cmax ? cmin + ' → ' + cmax : (cmin ? '≥ ' + cmin : '≤ ' + cmax), () => { els.cot_min.value = ''; els.cot_max.value = ''; });
+        const amin = els.annee_min.value, amax = els.annee_max.value;
+        if (amin || amax) add('plus', 'Ouverte ' + (amin && amax ? amin + '–' + amax : (amin ? 'depuis ' + amin : 'jusqu\'en ' + amax)), () => { els.annee_min.value = ''; els.annee_max.value = ''; });
+        const hmin = els.hauteur_min.value, hmax = els.hauteur_max.value;
+        if (hmin || hmax) add('plus', 'Hauteur ' + (hmin && hmax ? hmin + '–' + hmax : (hmin ? '≥ ' + hmin : '≤ ' + hmax)) + ' m', () => { els.hauteur_min.value = ''; els.hauteur_max.value = ''; });
+        ['ouvreur', 'topo'].forEach(n => { const v = els[n].value.trim(); if (v) add('plus', (n === 'topo' ? 'Topo : ' : 'Ouvreur : ') + v, () => { els[n].value = ''; }); });
+        return out;
+    }
+    {# Reconstruit les pastilles, le bouton « Réinitialiser » et les compteurs sur les boutons de filtre. #}
+    function refreshChips() {
+        const list = activeFilters();
+        chipsBox.innerHTML = '';
+        list.forEach(f => {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'rc-chip';
+            b.textContent = f.label + ' ✕';
+            b.addEventListener('click', () => { f.undo(); changed(true); });
+            chipsBox.appendChild(b);
+        });
+        const q = form.elements.q.value.trim();
+        resetBtn.hidden = !(list.length || q);
+        document.querySelectorAll('.rc-fp').forEach(fp => {
+            const n = list.filter(f => f.key === fp.dataset.key).length;
+            const btn = fp.querySelector('.rc-fbtn');
+            btn.classList.toggle('on', n > 0);
+            btn.innerHTML = '';
+            btn.append(btn.dataset.label);
+            if (n) { const s = document.createElement('span'); s.className = 'rc-count'; s.textContent = n; btn.appendChild(s); }
+        });
+    }
+
+    // ── Mise à jour en direct : on redemande la page et on remplace les résultats ──
+    {# Construit les paramètres d'URL à partir du formulaire (champs vides ignorés). #}
+    function query() {
+        const p = new URLSearchParams();
+        new FormData(form).forEach((v, k) => { if (String(v).trim() !== '') p.append(k, v); });
+        return p;
+    }
+    {# Redemande la page avec les filtres et remplace les zones de résultat ; ignore les réponses obsolètes. #}
+    async function load(extra) {
+        const p = query();
+        if (extra) Object.entries(extra).forEach(([k, v]) => p.set(k, v));
+        const my = ++req;
+        try {
+            const res = await fetch('/recherche?' + p.toString(), {headers: {'X-Requested-With': 'fetch'}});
+            if (!res.ok || my !== req) return;
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            ['rcResults', 'rcSummary', 'calBox'].forEach(id => {
+                const nu = doc.getElementById(id), old = document.getElementById(id);
+                if (nu && old) old.innerHTML = nu.innerHTML;
+            });
+            history.replaceState(null, '', '/recherche?' + p.toString());
+        } catch (e) { /* hors ligne : on garde l'affichage actuel */ }
+    }
+    {# Un filtre a changé : met à jour les pastilles puis recharge (tout de suite ou après 280 ms de saisie). #}
+    function changed(now) {
+        refreshChips();
+        clearTimeout(timer);
+        timer = setTimeout(load, now ? 0 : 280);
+    }
+
+    {# Événements du formulaire : validation, changement de case/liste, saisie de texte. #}
+    form.addEventListener('submit', e => { e.preventDefault(); changed(true); });
+    form.addEventListener('change', e => changed(true));
+    form.addEventListener('input', e => {
+        if (e.target.matches('input[type=text], input[type=number]')) changed(false);
+    });
+
+    // navigation du calendrier sans recharger la page (garde la fenêtre ouverte)
+    {# Navigation du calendrier (mois précédent/suivant) sans recharger la page. #}
+    document.getElementById('calBox').addEventListener('click', e => {
+        const nav = e.target.closest('.cal-nav');
+        if (!nav) return;
+        e.preventDefault();
+        document.getElementById('rcMois').value = nav.dataset.cal;
+        load({mois: nav.dataset.cal});
+    });
+
+    {# Réinitialisation : décoche tout, vide les champs, recharge. #}
+    resetBtn.addEventListener('click', () => {
+        form.querySelectorAll('input[type=checkbox]:checked').forEach(c => c.checked = false);
+        form.querySelectorAll('input[type=hidden][name=date]').forEach(h => h.remove());
+        ['q', 'cot_min', 'cot_max', 'annee_min', 'annee_max', 'hauteur_min', 'hauteur_max', 'ouvreur', 'topo'].forEach(n => form.elements[n].value = '');
+        changed(true);
+    });
+
+    refreshChips();
+})();
+</script>
+{% endblock %}

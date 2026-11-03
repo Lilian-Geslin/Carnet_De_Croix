@@ -1,0 +1,168 @@
+/* modals-forms.css : fenêtres modales (fond, boîte, en-tête, étapes) et éléments de formulaire
+   (lignes libellé/champ, grille des types, étoiles, longueurs de grande voie). */
+/* ─── MODAL ──────────────────────────────── */
+/* Fond assombri plein écran ; invisible tant que la classe .open n'est pas posée. */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Fenêtre ouverte (posée par openModal() dans core/modal.js). */
+.modal-overlay.open {
+    display: flex;
+}
+
+/* Boîte de la fenêtre : largeur limitée, défilement interne. */
+.modal-box {
+    background: #111812;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+/* Variante étroite (confirmations, petits formulaires). */
+.modal-box.modal-small { max-width: 420px; }
+
+/* En-tête : titre à gauche, croix de fermeture à droite. */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; }
+
+/* Zone de contenu de la fenêtre. */
+.modal-body { padding: 20px 24px 24px; }
+
+/* Boutons de navigation entre étapes (Précédent / Suivant / Enregistrer). */
+.modal-nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+/* Titre d'une étape du formulaire d'ascension. */
+.step h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin: 20px 0 12px;
+}
+.step h3:first-child { margin-top: 0; }
+
+/* ─── FORM ───────────────────────────────── */
+/* Ligne de formulaire : libellé à gauche, champ à droite. */
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.form-row label { width: 150px; flex-shrink: 0; font-size: 13px; color: var(--text-muted); }
+/* Mention « (facultatif) » à côté d'un libellé. */
+.optional-tag { font-size: 10px; color: var(--text-dim); font-weight: 400; text-transform: none; }
+
+/* Badge de ressenti indicatif (secteur / sous-secteur) */
+/* Badge de ressenti indicatif (secteur / sous-secteur) ; une couleur par niveau ci-dessous. */
+.ressenti-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.ressenti-tres_dur    { color: #e07a6a; background: rgba(139, 58, 42, 0.18); border-color: rgba(139, 58, 42, 0.4); }
+.ressenti-dur         { color: #d9a25c; background: rgba(139, 90, 42, 0.15); border-color: rgba(139, 90, 42, 0.35); }
+.ressenti-juste        { color: var(--text-muted); background: rgba(255,255,255,0.04); border-color: var(--border-light); }
+.ressenti-facile      { color: #8fd68a; background: rgba(94, 158, 82, 0.15); border-color: rgba(94, 158, 82, 0.35); }
+.ressenti-tres_facile { color: #5e9ecf; background: rgba(60, 90, 140, 0.18); border-color: rgba(60, 90, 140, 0.4); }
+/* Style commun des champs de saisie des formulaires. */
+.form-row input[type=text],
+.form-row input[type=date],
+.form-row input[type=number],
+.form-row select,
+.form-row textarea {
+    flex: 1;
+    background: #0d130e;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--accent-light); }
+.form-row select option { background: #131a14; }
+.form-row textarea { resize: vertical; min-height: 60px; align-self: flex-start; }
+/* Case à cocher avec son libellé sur une ligne. */
+.checkbox-row label { display: flex; align-items: center; gap: 8px; width: auto; cursor: pointer; color: var(--text); }
+.checkbox-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-light); }
+
+/* Type grid */
+/* Grille de choix du type d'ascension (boutons radio stylés). */
+.type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.type-option { position: relative; cursor: pointer; }
+/* Le bouton radio réel est caché : c'est le <span> voisin qui est affiché. */
+.type-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+.type-option span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: #0d130e;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+    text-align: center;
+}
+/* Choix sélectionné : fond vert sapin. */
+.type-option input:checked + span {
+    background: var(--accent-glow);
+    border-color: var(--accent-light);
+    color: var(--accent-light);
+}
+.type-option span:hover { background: var(--bg-hover); }
+
+/* Star input */
+/* Saisie de la note en étoiles (cliquables). */
+.star-input { display: flex; gap: 4px; cursor: pointer; }
+.star-input .star { font-size: 22px; color: var(--border-light); transition: color 0.1s; }
+.star-input .star.active, .star-input .star:hover { color: var(--or); }
+
+/* Longueurs GV in form */
+/* Formulaire des longueurs d'une grande voie : un bloc par longueur. */
+.longueurs-form-container { display: flex; flex-direction: column; gap: 10px; }
+.longueur-form-block {
+    background: #0d130e;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+}
+.longueur-form-block h4 { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+

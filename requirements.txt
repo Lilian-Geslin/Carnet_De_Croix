@@ -1,0 +1,13 @@
+# Versions ÉPINGLÉES : celles avec lesquelles les tests passent (sans faille connue au 1er nov. 2026).
+# Mise à jour : python scripts/check_updates.py, puis changer les versions ici, relancer pytest.
+Flask==3.1.3
+Werkzeug==3.1.9
+python-dotenv==1.2.3
+reportlab==5.0.1
+pillow==13.0.0
+charset-normalizer==3.5.1
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+itsdangerous==2.2.0
+click==8.5.0
+blinker==1.9.0

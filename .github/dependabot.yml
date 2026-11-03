@@ -1,0 +1,12 @@
+# Dependabot : propose automatiquement une pull request quand une dépendance (ou une action GitHub) a une
+# nouvelle version, ce qui inclut les correctifs de sécurité.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

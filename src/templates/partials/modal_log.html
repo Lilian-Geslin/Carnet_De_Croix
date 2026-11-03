@@ -1,0 +1,35 @@
+{#
+  Fenêtre « Marquer comme grimpé » (passer une ascension ticklist/projet au carnet).
+  Gérée par features/quick-modals.js. #logGrimpeRow (en tête / moulinette) n'apparaît que pour les types à corde.
+  Variable : grades (cotations, pour « Ma cotation »).
+#}
+<!-- Modal log -->
+<div class="modal-overlay" id="logModalOverlay">
+    <div class="modal-box modal-small">
+        <div class="modal-header">
+            <h2>Marquer comme grimpé</h2>
+            <button class="btn-close" id="btnCloseLogModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="logAscId">
+            <p class="log-essais-hint" id="logEssaisHint" style="display:none;"></p>
+            <div class="form-row"><label>Date</label><input type="date" id="logDate"></div>
+            <div class="form-row"><label>Nombre d'essais</label>
+                <select id="logStyle">
+                    <option value="">—</option>
+                    <option value="a_vue">À vue</option><option value="flash">Flash</option>
+                    <option value="essais_1">1 essai</option><option value="essais_2">2 essais</option>
+                    <option value="essais_3">3 essais</option><option value="essais_4">4 essais</option>
+                    <option value="essais_5">5 essais</option><option value="plus_5">Plus de 5 essais</option>
+                </select>
+            </div>
+            <div class="form-row" id="logGrimpeRow" style="display:none;"><label>En tête / Moulinette <span class="req-star" title="Obligatoire">*</span></label>
+                <select id="logGrimpe"><option value="">—</option><option value="tete">En tête</option><option value="moulinette">Moulinette</option></select>
+            </div>
+            <div class="form-row"><label>Ma cotation</label><select id="logCotPerso"><option value="">—</option>{% for g in grades %}<option value="{{ g }}">{{ g }}</option>{% endfor %}</select></div>
+            <div class="form-row checkbox-row"><label><input type="checkbox" id="logPiedsNus"> Pieds nus</label></div>
+            <div class="form-row"><label>Note beauté</label><div class="star-input" id="logStars" data-val="0"></div></div>
+            <div class="modal-nav"><button class="btn-primary" id="btnSubmitLog">Enregistrer</button></div>
+        </div>
+    </div>
+</div>

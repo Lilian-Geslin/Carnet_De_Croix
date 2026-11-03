@@ -1,0 +1,119 @@
+/* ticklist.css : page Tick list — en-tête avec total et répartition, barre d'outils (recherche, vues, catégories),
+   groupes et lignes, vue « Paliers » en colonnes par cotation. */
+/* ═══════════════════════════════════════════════════════════
+   TICK LIST : liste à cocher façon cahier (lignes, pas de cartes)
+   ═══════════════════════════════════════════════════════════ */
+/* En-tête : total à gauche, répartition par type / catégorie à droite. */
+.tl-head {
+    display: flex; gap: 28px; align-items: center; flex-wrap: wrap;
+    padding: 16px 20px; margin-bottom: 14px;
+    border: 1px dashed var(--border-light); border-radius: var(--radius);
+    background: repeating-linear-gradient(to bottom, transparent 0, transparent 27px, rgba(255,255,255,0.03) 27px, rgba(255,255,255,0.03) 28px);
+}
+.tl-total { display: flex; flex-direction: column; align-items: center; min-width: 96px; line-height: 1.1; }
+.tl-total strong { font-size: 44px; font-weight: 300; letter-spacing: -1px; color: var(--text); }
+.tl-total span { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-top: 4px; }
+.tl-head-parts { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 260px; }
+.tl-head-line { display: flex; gap: 6px 8px; align-items: center; flex-wrap: wrap; }
+.tl-head-label { width: 88px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+.tl-head-chip { font: inherit; font-size: 12px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 12px; padding: 2px 10px; background: transparent; }
+.tl-head-btn { cursor: pointer; }
+.tl-head-btn:hover { color: var(--text); border-color: var(--accent-light); }
+
+/* Barre d'outils : recherche, filtres, choix de vue. */
+.tl-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.tl-toolbar input[type=search], .tl-toolbar select {
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+    padding: 7px 10px; font: inherit; font-size: 13px; outline: none; min-width: 0;
+}
+.tl-toolbar input[type=search] { flex: 1 1 180px; max-width: 280px; }
+.tl-toolbar select:disabled { opacity: 0.4; }
+/* Boutons segmentés : choix de la vue (Liste, Paliers…). */
+.tl-views { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; }
+.tl-views button { background: var(--bg-card); color: var(--text-muted); border: 0; border-right: 1px solid var(--border-light); font: inherit; font-size: 13px; padding: 7px 14px; cursor: pointer; }
+.tl-views button:last-child { border-right: 0; }
+.tl-views button.active { background: var(--accent-dark); color: var(--text); font-weight: 600; }
+/* Pastilles de filtre par catégorie (Performance, Beauté, Classique). */
+.tl-cats { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.tl-cat-chip { background: transparent; color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 14px; padding: 4px 11px; font: inherit; font-size: 12px; cursor: pointer; }
+.tl-cat-chip:hover { color: var(--text); }
+.tl-cat-chip.active { background: rgba(94,158,82,0.22); border-color: var(--accent-light); color: var(--text); }
+.tl-count { font-size: 12px; color: var(--text-dim); }
+.tl-empty { text-align: center; color: var(--text-dim); font-style: italic; padding: 40px 0; }
+
+/* Couleurs discrètes des catégories (texte seulement) */
+/* Couleur de chaque catégorie, via la variable --tl-c. */
+.tl-c-performance { --tl-c: #e3c23c; }
+.tl-c-beaute      { --tl-c: #c993d6; }
+.tl-c-majeure     { --tl-c: #7fb3d5; }
+.tl-c-none        { --tl-c: var(--text-dim); }
+.tl-head-btn.tl-c-performance, .tl-head-btn.tl-c-beaute, .tl-head-btn.tl-c-majeure { color: var(--tl-c); }
+
+/* Groupes et lignes */
+/* Groupe de lignes avec son en-tête. */
+.tl-group { margin-bottom: 26px; }
+.tl-group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 0 2px 6px; border-bottom: 2px solid var(--border-light); }
+.tl-group-head h3 { font-size: 16px; font-weight: 600; color: var(--text); margin: 0; letter-spacing: 0.2px; }
+.tl-group-head[class*="tl-c-"] h3 { color: var(--tl-c); }
+.tl-group-count { font-size: 12px; color: var(--text-dim); }
+.tl-group-sub { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.tl-list { display: flex; flex-direction: column; }
+/* Une ligne de la tick list ; .tl-done la fait glisser et disparaître quand on la coche. */
+.tl-item {
+    display: flex; align-items: flex-start; gap: 14px; padding: 11px 4px;
+    border-bottom: 1px solid var(--border);
+    transition: opacity 0.4s, transform 0.4s;
+}
+.tl-item:hover { background: rgba(255,255,255,0.02); }
+/* Case ronde pour cocher (passer en grimpé). */
+.tl-check {
+    flex-shrink: 0; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%;
+    border: 2px solid var(--border-light); background: transparent; color: transparent; cursor: pointer;
+    display: grid; place-items: center; font-size: 14px; line-height: 1; padding: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tl-check:hover { border-color: var(--accent-light); color: var(--accent-light); }
+.tl-item.tl-done .tl-check { background: var(--accent-light); border-color: var(--accent-light); color: #0d130e; }
+.tl-item.tl-done { opacity: 0; transform: translateX(14px); }
+.tl-item.tl-done .tl-nom { text-decoration: line-through; }
+/* Contenu d'une ligne : nom, cotation, lieu, commentaire. */
+.tl-main { flex: 1; min-width: 0; }
+.tl-line1 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tl-nom { font-size: 15px; font-weight: 600; color: var(--text); }
+.tl-depart { font-size: 10px; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+.tl-cot { font-size: 14px; color: var(--or); }
+.tl-up { font-size: 11px; color: #e59a8a; cursor: help; }
+.tl-line2 { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.tl-comment { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 3px; white-space: pre-line; }
+.tl-side { display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+/* Sélecteur de catégorie d'une ligne. */
+.tl-cat {
+    background: transparent; border: 1px solid var(--border); border-radius: 12px; font: inherit; font-size: 12px;
+    padding: 3px 8px; color: var(--tl-c, var(--text-dim)); cursor: pointer; outline: none; max-width: 140px;
+}
+.tl-cat option { background: #131a14; color: var(--text); }
+
+/* Vue Paliers : colonnes par cotation, façon mur d'objectifs */
+/* Vue Paliers : une colonne par cotation, défilement horizontal. */
+.tl-paliers { display: flex; gap: 14px; align-items: flex-start; overflow-x: auto; padding-bottom: 12px; }
+.tl-col { flex: 0 0 290px; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,0.015); padding: 0 12px 6px; }
+.tl-col-head { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 2px 8px; border-bottom: 2px solid var(--border-light); margin-bottom: 2px; }
+.tl-col-label { font-size: 22px; font-weight: 300; color: var(--or); }
+.tl-col-count { font-size: 12px; color: var(--text-dim); }
+/* Variante compacte d'une ligne (vue Paliers). */
+.tl-compact { flex-wrap: wrap; gap: 10px; }
+.tl-compact .tl-side { flex-basis: 100%; justify-content: flex-start; margin-left: 38px; }
+.tl-compact .tl-nom { font-size: 14px; }
+@media (max-width: 700px) {
+    .tl-item { flex-wrap: wrap; }
+    .tl-item .tl-side { flex-basis: 100%; justify-content: flex-start; margin-left: 38px; }
+    .tl-head-label { width: 100%; }
+    .tl-group-sub { margin-left: 0; }
+    .tl-col { flex-basis: 84vw; }
+}
+
+/* Carnet : bouton « Plus d'infos » dans l'en-tête de la carte (cartes moins hautes) */
+/* Carnet : bouton « Plus d'infos » dans l'en-tête de carte (le texte disparaît sur petit écran). */
+.btn-asc-info-top { white-space: nowrap; padding: 3px 9px; font-size: 12px; }
+@media (max-width: 520px) { .btn-asc-info-top .info-txt { display: none; } }
+

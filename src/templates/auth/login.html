@@ -1,0 +1,27 @@
+{#
+  Page de connexion (GET/POST /login). Ne dérive pas de base.html : pas de menu.
+  Variable : error (str ou None), message affiché au-dessus du formulaire.
+#}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion – Carnet de Croix</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth-misc.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-brand">CARNET<span>DE CROIX</span></div>
+        <h2>Connexion</h2>
+        {% if error %}<p class="error-msg">{{ error }}</p>{% endif %}
+        <form method="POST" action="/login">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Mot de passe" required>
+            <button type="submit">Se connecter</button>
+        </form>
+        <p class="auth-switch">Pas de compte ? <a href="/register">Créer un compte</a></p>
+    </div>
+</body>
+</html>

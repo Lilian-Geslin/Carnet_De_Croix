@@ -1,0 +1,32 @@
+{#
+  Page d'inscription (GET/POST /register). Ne dérive pas de base.html : pas de menu.
+  Variable : error (str ou None), message affiché au-dessus du formulaire.
+#}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription – Carnet de Croix</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth-misc.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-brand">CARNET<span>DE CROIX</span></div>
+        <h2>Créer un compte</h2>
+        {% if error %}<p class="error-msg">{{ error }}</p>{% endif %}
+        {% if not closed %}
+        <form method="POST" action="/register">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_ts" value="{{ new_form_token() }}">
+            <div class="hp-field" aria-hidden="true"><label>Ne pas remplir <input type="text" name="company_url" tabindex="-1" autocomplete="off"></label></div>
+            <input type="text" name="name" placeholder="Prénom" required maxlength="100" value="{{ form_name or '' }}">
+            <input type="email" name="email" placeholder="Email" required maxlength="254" value="{{ form_email or '' }}">
+            <input type="password" name="password" placeholder="Mot de passe (8 caractères minimum)" minlength="8" maxlength="128" required>
+            <button type="submit">S'inscrire</button>
+        </form>
+        {% endif %}
+        <p class="auth-switch">Déjà un compte ? <a href="/login">Se connecter</a></p>
+    </div>
+</body>
+</html>

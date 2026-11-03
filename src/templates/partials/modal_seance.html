@@ -1,0 +1,49 @@
+{#
+  Fenêtre des séances d'un projet : historique, formulaire de séance (compteur d'essais, date, mini-journal)
+  et bouton « Projet réussi ». Gérée par features/seances.js. Sert aussi, sur la Tick List, de fenêtre « Passer en projet »
+  (l'envie ne devient projet qu'à l'enregistrement de la séance, ou avec « Passer en projet sans séance »).
+#}
+<!-- Modal séance d'un projet : historique, nouvelle séance (essais +1/−1, date, mini-journal), passage au carnet -->
+<div class="modal-overlay" id="seanceModalOverlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="seanceModalTitle">Séances du projet</h2>
+            <button class="btn-close" id="btnCloseSeanceModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="seanceAscId">
+            <input type="hidden" id="seanceAscType">
+            <p class="seance-nom" id="seanceNom"></p>
+            <p class="seance-resume" id="seanceResume"></p>
+
+            <div class="seance-history" id="seanceHistory"></div>
+
+            <div class="seance-form">
+                <div class="seance-form-title" id="seanceFormTitle">Séance n°1</div>
+                <p class="seance-prev-hint" id="seancePrevHint"></p>
+                <div class="form-row"><label>Date</label><input type="date" id="seanceDate"></div>
+                <div class="form-row"><label>Essais</label>
+                    <div class="counter">
+                        <button type="button" class="counter-btn" id="seanceMinus" aria-label="Un essai de moins">−</button>
+                        <input type="number" id="seanceEssais" min="0" max="999" value="0">
+                        <button type="button" class="counter-btn" id="seancePlus" aria-label="Un essai de plus">+</button>
+                    </div>
+                </div>
+                <div class="form-row"><label>Mini-journal</label>
+                    <textarea id="seanceComment" rows="3" placeholder="Sensations, passage clé, méthode, ce qu'il reste à faire…"></textarea>
+                </div>
+                <p class="seance-flash" id="seanceFlash" style="display:none;"></p>
+                <div class="modal-nav seance-nav">
+                    <button type="button" class="btn-secondary" id="btnSeanceCancelEdit" style="display:none;">Annuler la modification</button>
+                    <button type="button" class="btn-secondary" id="btnSeanceSkip" style="display:none;" title="L'envie devient un projet sans séance enregistrée">Passer en projet sans séance</button>
+                    <button type="button" class="btn-primary" id="btnSeanceSave">Enregistrer la séance</button>
+                </div>
+            </div>
+
+            <div class="seance-finish">
+                <button type="button" class="btn-finish" id="btnSeanceFinish">✓ Projet réussi : l'ajouter au carnet</button>
+                <p class="seance-finish-hint">Si le compteur ci-dessus n'est pas à 0, ces essais sont d'abord enregistrés comme séance. Le journal des séances est conservé dans le carnet.</p>
+            </div>
+        </div>
+    </div>
+</div>
