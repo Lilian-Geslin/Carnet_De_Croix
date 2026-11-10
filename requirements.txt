@@ -9,5 +9,5 @@ charset-normalizer==3.5.2
 Jinja2==3.1.6
 MarkupSafe==3.0.4
 itsdangerous==2.2.0
-click==8.5.0
+click==8.5.1
 blinker==1.9.0
